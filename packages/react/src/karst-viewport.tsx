@@ -179,6 +179,10 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
     controller._notifyAnchors();
   }, [karst, scrollRef]);
 
+  useLayoutEffect(() => {
+    updateAnchor();
+  }, [karst.options.activeItemId, updateAnchor]);
+
   const syncViewport = useCallback(() => {
     frameRef.current = null;
     const scroller = scrollRef.current;
