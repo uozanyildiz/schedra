@@ -8,7 +8,7 @@ import {
   type UseFloatingReturn,
 } from "@floating-ui/react";
 import type { KarstController } from "@karst/react";
-import { useEffect, useMemo, useReducer } from "react";
+import { useEffect, useLayoutEffect, useMemo, useReducer } from "react";
 
 export interface UseKarstPopoverOptions {
   karst: KarstController<any, any>;
@@ -71,7 +71,7 @@ export function useKarstPopover({
     [activeItemId, karst],
   );
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     floating.refs.setPositionReference(virtualElement);
   }, [floating.refs, virtualElement]);
 
@@ -93,7 +93,10 @@ export function useKarstPopover({
   return {
     open: open && activeItemId !== null,
     activeItemId,
-    floatingStyles: floating.floatingStyles,
+    floatingStyles: {
+      ...floating.floatingStyles,
+      visibility: floating.isPositioned ? "visible" : "hidden",
+    },
     floatingRef: floating.refs.setFloating,
     update: floating.update,
   };

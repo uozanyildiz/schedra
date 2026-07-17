@@ -333,6 +333,13 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
         return;
       }
       const additive = event.shiftKey || event.ctrlKey || event.metaKey;
+      if (!additive && karst.options.activeItemId === itemId) {
+        karst.options.onSelectionChange({
+          selectedItemIds: [...karst.options.selectedItemIds],
+          activeItemId: null,
+        });
+        return;
+      }
       const selected = new Set(
         additive ? karst.options.selectedItemIds : ([] as string[]),
       );
