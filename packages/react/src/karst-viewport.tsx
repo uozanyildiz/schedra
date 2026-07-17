@@ -44,6 +44,12 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
   const visibleTimeRef = useRef({ start: 0, end: 0 });
   const [visibleTime, setVisibleTime] = useState({ start: 0, end: 0 });
   const [visibleRows, setVisibleRows] = useState({ start: 0, end: 0 });
+  const [viewport, setViewport] = useState({
+    width: 1,
+    height: 1,
+    scrollLeft: 0,
+    scrollTop: 0,
+  });
   const scrollRef = karst.scrollRef;
   const headerHeight = 32;
 
@@ -52,7 +58,8 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
      engine when construction-only configuration changes. */
   const engine = useMemo(() => {
     const options = karst.options;
-    return createKarstEngine<TRowData, TItemData>({
+    let isConstructing = true;
+    const nextEngine = createKarstEngine<TRowData, TItemData>({
       rows: options.rows,
       view: options.view,
       origin: options.range.start,
@@ -72,21 +79,30 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
       ...(options.theme === undefined ? {} : { theme: options.theme }),
       ...(options.renderItem === undefined
         ? {}
-        : { renderItem: options.renderItem }),
+        : {
+            renderItem: (
+              args: Parameters<NonNullable<typeof options.renderItem>>[0],
+            ) => karst.options.renderItem?.(args),
+          }),
       ...(options.onDataIssues === undefined
         ? {}
         : { onDataIssues: options.onDataIssues }),
-      onConflictsChange: (result) =>
-        options.onConflictsChange?.(result.conflicts),
+      onConflictsChange: (result) => {
+        if (!isConstructing) {
+          options.onConflictsChange?.(result.conflicts);
+        }
+      },
       onVisibleRangeChange: (range) => {
         visibleTimeRef.current = range;
       },
     });
+    isConstructing = false;
+    return nextEngine;
   }, [
     karst,
     karst.options.conflictVisibility,
     karst.options.overscan,
-    karst.options.renderItem,
+    Boolean(karst.options.renderItem),
     karst.options.rowHeight,
     karst.options.theme,
   ]);
@@ -175,6 +191,19 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
     const height = Math.max(1, scroller.clientHeight - headerHeight);
     const timelineScrollLeft = scroller.scrollLeft;
     const timelineScrollTop = scroller.scrollTop;
+    setViewport((current) =>
+      current.width === width &&
+      current.height === height &&
+      current.scrollLeft === timelineScrollLeft &&
+      current.scrollTop === timelineScrollTop
+        ? current
+        : {
+            width,
+            height,
+            scrollLeft: timelineScrollLeft,
+            scrollTop: timelineScrollTop,
+          },
+    );
     for (const canvas of [grid, items, interaction]) {
       canvas.style.transform = `translate(${scroller.scrollLeft}px, ${scroller.scrollTop}px)`;
     }
@@ -233,9 +262,9 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
     };
     if (!layers.grid || !layers.items || !layers.interaction) return;
     engine.attach(layers as CanvasLayers);
-    scheduleSync();
+    syncViewport();
     return () => engine.detach();
-  }, [engine, scheduleSync]);
+  }, [engine, syncViewport]);
 
   useLayoutEffect(() => {
     const scroller = scrollRef.current;
@@ -246,7 +275,10 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
     return () => {
       observer.disconnect();
       scroller.removeEventListener("scroll", scheduleSync);
-      if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
+      if (frameRef.current !== null) {
+        cancelAnimationFrame(frameRef.current);
+        frameRef.current = null;
+      }
     };
   }, [scheduleSync, scrollRef]);
 
@@ -372,7 +404,7 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
             top: 0,
             width: labelWidth,
             height: headerHeight,
-            transform: `translate(${scrollRef.current?.scrollLeft ?? 0}px, ${scrollRef.current?.scrollTop ?? 0}px)`,
+            transform: `translate(${viewport.scrollLeft}px, ${viewport.scrollTop}px)`,
             boxSizing: "border-box",
             padding: "8px 10px",
             background: "#f8fafc",
@@ -389,13 +421,10 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
             zIndex: 5,
             left: labelWidth,
             top: 0,
-            width: Math.max(
-              1,
-              (scrollRef.current?.clientWidth ?? 1) - labelWidth,
-            ),
+            width: viewport.width,
             height: headerHeight,
             overflow: "hidden",
-            transform: `translate(${scrollRef.current?.scrollLeft ?? 0}px, ${scrollRef.current?.scrollTop ?? 0}px)`,
+            transform: `translate(${viewport.scrollLeft}px, ${viewport.scrollTop}px)`,
             background: "#f8fafc",
             borderBottom: "1px solid #cbd5e1",
             font: "11px system-ui, sans-serif",
@@ -424,15 +453,9 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
             pointerEvents: "none",
             left: labelWidth,
             top: headerHeight,
-            width: Math.max(
-              1,
-              (scrollRef.current?.clientWidth ?? 1) - labelWidth,
-            ),
-            height: Math.max(
-              1,
-              (scrollRef.current?.clientHeight ?? 1) - headerHeight,
-            ),
-            transform: `translate(${scrollRef.current?.scrollLeft ?? 0}px, ${scrollRef.current?.scrollTop ?? 0}px)`,
+            width: viewport.width,
+            height: viewport.height,
+            transform: `translate(${viewport.scrollLeft}px, ${viewport.scrollTop}px)`,
             backgroundImage:
               "linear-gradient(to right, rgba(100,116,139,.28) 1px, transparent 1px)",
             backgroundSize: `${unitWidth}px 100%`,
@@ -460,6 +483,7 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
                   overflow: "hidden",
                   background: "white",
                   borderBottom: "1px solid #e2e8f0",
+                  transform: `translateX(${viewport.scrollLeft}px)`,
                 }}
               >
                 {renderRowLabel?.({ row, index }) ?? row.id}

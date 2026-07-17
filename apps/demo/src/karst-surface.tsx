@@ -1,7 +1,7 @@
 import type { KarstView, SelectionChange, TimeRange } from "@karst/core";
 import { KarstViewport, useKarst } from "@karst/react";
 import { useKarstPopover } from "@karst/react-popover";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo } from "react";
 import type { WorkItem, Workstream } from "./data";
 import { ROW_HEIGHT, SCHEDULE_START } from "./data";
 
@@ -46,7 +46,6 @@ export function KarstSurface({
   onConflictCountChange,
   onActiveItemChange,
 }: KarstSurfaceProps) {
-  const didPosition = useRef(false);
   const activeEntry = useMemo(() => {
     for (const row of rows) {
       const item = row.items.find((candidate) => candidate.id === activeItemId);
@@ -130,8 +129,6 @@ export function KarstSurface({
   }, [activeEntry, onActiveItemChange]);
 
   useEffect(() => {
-    if (didPosition.current) return;
-    didPosition.current = true;
     karst.scrollToTime(SCHEDULE_START);
   }, [karst]);
 

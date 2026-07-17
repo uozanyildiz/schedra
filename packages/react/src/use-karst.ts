@@ -1,19 +1,12 @@
+import { createTimeScale } from "@karst/core";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { KarstController, UseKarstOptions } from "./types.js";
 
-const UNIT_MS = {
-  hour: 60 * 60 * 1000,
-  day: 24 * 60 * 60 * 1000,
-  week: 7 * 24 * 60 * 60 * 1000,
-} as const;
-
-const UNIT_WIDTH = { hour: 96, day: 120, week: 160 } as const;
-
 export function pixelsPerMillisecond(
-  view: keyof typeof UNIT_MS,
+  view: "hour" | "day" | "week",
   zoom: number,
 ): number {
-  return (UNIT_WIDTH[view] * zoom) / UNIT_MS[view];
+  return createTimeScale({ view, origin: 0, zoom }).pixelsPerMillisecond;
 }
 
 export function useKarst<TRowData = unknown, TItemData = unknown>(
@@ -42,7 +35,7 @@ export function useKarst<TRowData = unknown, TItemData = unknown>(
       pixelsPerMillisecond(current.view, current.zoom);
     scrollRef.current?.scrollTo({
       left: Math.max(0, target),
-      behavior: "smooth",
+      behavior: "auto",
     });
   }, []);
 
