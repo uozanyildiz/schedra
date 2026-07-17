@@ -6,5 +6,6 @@
     "emitDeclarationOnly": false,
     "noEmit": false,
     "outDir": "dist"
-  }
+  },
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"]
 }
