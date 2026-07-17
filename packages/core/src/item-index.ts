@@ -1,0 +1,85 @@
+import type {
+  HitRegion,
+  ItemRect,
+  KarstItem,
+  KarstRow,
+  TimeRange,
+} from "./types.js";
+
+export class ItemIndex<TData = unknown> {
+  readonly itemsById = new Map<
+    string,
+    { item: KarstItem<TData>; rowId: string }
+  >();
+  readonly itemsByRow = new Map<string, readonly KarstItem<TData>[]>();
+
+  constructor(rows: readonly KarstRow<unknown, TData>[]) {
+    for (const row of rows) {
+      const sorted = [...row.items].sort((a, b) => a.start - b.start);
+      this.itemsByRow.set(row.id, sorted);
+      for (const item of sorted)
+        this.itemsById.set(item.id, { item, rowId: row.id });
+    }
+  }
+
+  queryRow(rowId: string, range: TimeRange): readonly KarstItem<TData>[] {
+    const items = this.itemsByRow.get(rowId) ?? [];
+    const result: KarstItem<TData>[] = [];
+    for (const item of items) {
+      if (item.start >= range.end) break;
+      if (
+        item.start === item.end
+          ? item.start >= range.start
+          : item.end > range.start
+      ) {
+        result.push(item);
+      }
+    }
+    return result;
+  }
+}
+
+export class HitTestIndex<TData = unknown> {
+  private byRow = new Map<number, HitRegion<TData>[]>();
+  private byItem = new Map<string, HitRegion<TData>>();
+  clear(): void {
+    this.byRow.clear();
+    this.byItem.clear();
+  }
+  add(
+    rowIndex: number,
+    region: HitRegion<TData>,
+    rowHeight = region.rect.height,
+  ): void {
+    const finalRow = Math.floor(
+      (region.rect.y + Math.max(0, region.rect.height - Number.EPSILON)) /
+        Math.max(1, rowHeight),
+    );
+    for (let index = rowIndex; index <= finalRow; index++) {
+      const regions = this.byRow.get(index) ?? [];
+      regions.push(region);
+      this.byRow.set(index, regions);
+    }
+    this.byItem.set(region.item.id, region);
+  }
+  hitTest(x: number, y: number, rowHeight: number): HitRegion<TData> | null {
+    const regions = this.byRow.get(Math.floor(y / rowHeight)) ?? [];
+    for (let index = regions.length - 1; index >= 0; index--) {
+      const region = regions[index]!;
+      if (contains(region.rect, x, y)) return region;
+    }
+    return null;
+  }
+  getByItemId(itemId: string): HitRegion<TData> | null {
+    return this.byItem.get(itemId) ?? null;
+  }
+}
+
+function contains(rect: ItemRect, x: number, y: number): boolean {
+  return (
+    x >= rect.x &&
+    x <= rect.x + rect.width &&
+    y >= rect.y &&
+    y <= rect.y + rect.height
+  );
+}
