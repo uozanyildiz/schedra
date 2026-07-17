@@ -56,6 +56,8 @@ function Schedule() {
       <KarstViewport
         karst={karst}
         labelWidth={280}
+        stickyHeader
+        stickyRowLabels
         renderRowLabel={({ row, index }) => (
           <div>
             {index + 1}. {row.data.name}
@@ -67,6 +69,69 @@ function Schedule() {
   );
 }
 ```
+
+## Sticky timeline chrome
+
+The time header and row labels remain visible by default while the timeline
+scrolls:
+
+```tsx
+<KarstViewport karst={karst} stickyHeader={true} stickyRowLabels={true} />
+```
+
+Set either prop to `false` when the consumer wants that layer to move with the
+timeline. `stickyHeader` controls the full time header, including the row
+corner. `stickyRowLabels` independently controls the left row-label column.
+Both props are also available on `KarstTimeline`.
+
+### Custom header content and styles
+
+Karst keeps the existing 32px light header when no header options are passed.
+Use the header props when the timeline needs to match an application-specific
+design:
+
+```tsx
+<KarstViewport
+  karst={karst}
+  headerHeight={44}
+  headerStyle={{ background: "#211f1a" }}
+  cornerHeaderStyle={{ color: "white", background: "#211f1a" }}
+  timeHeaderStyle={{ color: "white", background: "#211f1a" }}
+  renderCornerHeader={() => <strong>Teams</strong>}
+  renderTimeHeader={({ ticks, formatTick, getTickOffset }) =>
+    ticks.map((tick) => (
+      <span
+        key={tick.timestamp}
+        style={{
+          position: "absolute",
+          left: getTickOffset(tick.timestamp),
+          top: 12,
+        }}
+      >
+        {formatTick(tick.timestamp)}
+      </span>
+    ))
+  }
+/>
+```
+
+`renderTimeHeader` replaces only the time-header content. Karst still owns the
+sticky container and supplies the visible ticks:
+
+| Render argument | Purpose                                       |
+| --------------- | --------------------------------------------- |
+| `ticks`         | Visible timezone-aware timeline ticks.        |
+| `visibleRange`  | Current visible start and end timestamps.     |
+| `width`         | Visible time-header width.                    |
+| `height`        | Configured header height.                     |
+| `view`          | Current hour, day, or week view.              |
+| `timeZone`      | Current IANA timezone.                        |
+| `formatTick`    | Formats a timestamp like the default header.  |
+| `getTickOffset` | Returns the tick's horizontal pixel position. |
+
+`renderCornerHeader` receives the corner `width` and `height`.
+`headerHeight` controls header geometry and the canvas offset. The three style
+props are merged over the default styles.
 
 ## Controlled state
 
@@ -97,6 +162,29 @@ const karst = useKarst({
 
 A normal item click selects one item. Holding `Shift`, `Ctrl`, or `Cmd` toggles
 an item inside the multi-selection.
+
+### Box selection
+
+Enable desktop-style box selection on `KarstViewport`:
+
+```tsx
+<KarstViewport
+  karst={karst}
+  interactionMode={boxSelectionEnabled ? "box-select" : "default"}
+  boxSelection={{
+    match: "intersect",
+    activationDistance: 4,
+  }}
+/>
+```
+
+Start dragging from empty canvas space. Karst draws the box and proposes the
+new controlled selection through `onSelectionChange`. Hold `Shift`, `Ctrl`, or
+`Cmd` to add items to the current selection. Press `Escape` to cancel an active
+drag.
+
+Use `match: "intersect"` to select every item touched by the box. Use
+`match: "contained"` to select only items fully inside it.
 
 `activeItemId` identifies the primary item. It is normally the item whose
 popover or details panel is open.
@@ -218,3 +306,7 @@ default.
 | `onVisibleRangeChange` | callback                    | No       | Reports visible time and rows.            |
 | `onDataIssues`         | callback                    | No       | Reports invalid data.                     |
 | `onConflictsChange`    | callback                    | No       | Reports overlaps.                         |
+
+`KarstViewport` also accepts `interactionMode`, `boxSelection`, `labelWidth`,
+the header options above, `stickyHeader`, `stickyRowLabels`, and
+`renderRowLabel`. `KarstTimeline` forwards the same viewport options.

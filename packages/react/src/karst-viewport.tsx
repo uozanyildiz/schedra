@@ -58,14 +58,33 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
   className,
   style,
   labelWidth = 180,
+  headerHeight = 32,
+  headerStyle,
+  cornerHeaderStyle,
+  timeHeaderStyle,
+  stickyHeader = true,
+  stickyRowLabels = true,
+  interactionMode = "default",
+  boxSelection,
+  renderCornerHeader,
+  renderTimeHeader,
   renderRowLabel,
 }: KarstViewportProps<TRowData, TItemData>) {
   const gridRef = useRef<HTMLCanvasElement>(null);
   const itemsRef = useRef<HTMLCanvasElement>(null);
   const interactionRef = useRef<HTMLCanvasElement>(null);
+  const gridOverlayRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<KarstEngine<TRowData, TItemData> | null>(null);
   const frameRef = useRef<number | null>(null);
   const hoveredRef = useRef<string | null>(null);
+  const boxDragRef = useRef<{
+    pointerId: number;
+    startX: number;
+    startY: number;
+    additive: boolean;
+    initialIds: readonly string[];
+    active: boolean;
+  } | null>(null);
   const reportingRef = useRef({
     onConflictsChange: karst.options.onConflictsChange,
     onDataIssues: karst.options.onDataIssues,
@@ -87,11 +106,9 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
   const [viewport, setViewport] = useState({
     width: 1,
     height: 1,
-    scrollLeft: 0,
-    scrollTop: 0,
   });
   const scrollRef = karst.scrollRef;
-  const headerHeight = 32;
+  const resolvedHeaderHeight = Math.max(1, headerHeight);
 
   /* eslint-disable react-hooks/exhaustive-deps -- The controller exposes current
      options through a stable getter. These fields intentionally recreate the
@@ -218,6 +235,20 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
     updateAnchor();
   }, [karst.options.activeItemId, updateAnchor]);
 
+  const pinViewportLayers = useCallback(() => {
+    const scroller = scrollRef.current;
+    if (!scroller) return;
+    const transform = `translate(${scroller.scrollLeft}px, ${scroller.scrollTop}px)`;
+    for (const layer of [
+      gridRef.current,
+      itemsRef.current,
+      interactionRef.current,
+      gridOverlayRef.current,
+    ]) {
+      if (layer) layer.style.transform = transform;
+    }
+  }, [scrollRef]);
+
   const syncViewport = useCallback(() => {
     frameRef.current = null;
     const scroller = scrollRef.current;
@@ -227,25 +258,15 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
     if (!scroller || !grid || !items || !interaction) return;
     const options = karst.options;
     const width = Math.max(1, scroller.clientWidth - labelWidth);
-    const height = Math.max(1, scroller.clientHeight - headerHeight);
+    const height = Math.max(1, scroller.clientHeight - resolvedHeaderHeight);
     const timelineScrollLeft = scroller.scrollLeft;
     const timelineScrollTop = scroller.scrollTop;
     setViewport((current) =>
-      current.width === width &&
-      current.height === height &&
-      current.scrollLeft === timelineScrollLeft &&
-      current.scrollTop === timelineScrollTop
+      current.width === width && current.height === height
         ? current
-        : {
-            width,
-            height,
-            scrollLeft: timelineScrollLeft,
-            scrollTop: timelineScrollTop,
-          },
+        : { width, height },
     );
-    for (const canvas of [grid, items, interaction]) {
-      canvas.style.transform = `translate(${scroller.scrollLeft}px, ${scroller.scrollTop}px)`;
-    }
+    pinViewportLayers();
     engine.setViewport({
       width,
       height,
@@ -286,7 +307,15 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
       rowEndIndex: range.endIndex,
     } satisfies KarstVisibleRange);
     updateAnchor();
-  }, [engine, karst, labelWidth, scrollRef, updateAnchor]);
+  }, [
+    engine,
+    karst,
+    labelWidth,
+    pinViewportLayers,
+    resolvedHeaderHeight,
+    scrollRef,
+    updateAnchor,
+  ]);
 
   const scheduleSync = useCallback(() => {
     if (frameRef.current !== null) return;
@@ -349,16 +378,20 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
     if (!scroller) return;
     const observer = new ResizeObserver(scheduleSync);
     observer.observe(scroller);
-    scroller.addEventListener("scroll", scheduleSync, { passive: true });
+    const onScroll = () => {
+      pinViewportLayers();
+      scheduleSync();
+    };
+    scroller.addEventListener("scroll", onScroll, { passive: true });
     return () => {
       observer.disconnect();
-      scroller.removeEventListener("scroll", scheduleSync);
+      scroller.removeEventListener("scroll", onScroll);
       if (frameRef.current !== null) {
         cancelAnimationFrame(frameRef.current);
         frameRef.current = null;
       }
     };
-  }, [scheduleSync, scrollRef]);
+  }, [pinViewportLayers, scheduleSync, scrollRef]);
 
   useLayoutEffect(() => {
     const scroller = scrollRef.current;
@@ -385,8 +418,39 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
     );
   }, []);
 
+  const pointerPosition = useCallback(
+    (event: PointerEvent<HTMLCanvasElement>) => {
+      const rect = event.currentTarget.getBoundingClientRect();
+      return {
+        x: Math.max(0, Math.min(rect.width, event.clientX - rect.left)),
+        y: Math.max(0, Math.min(rect.height, event.clientY - rect.top)),
+      };
+    },
+    [],
+  );
+
   const onPointerMove = useCallback(
     (event: PointerEvent<HTMLCanvasElement>) => {
+      const drag = boxDragRef.current;
+      if (drag) {
+        const point = pointerPosition(event);
+        const distance = Math.hypot(
+          point.x - drag.startX,
+          point.y - drag.startY,
+        );
+        if (
+          !drag.active &&
+          distance >= (boxSelection?.activationDistance ?? 4)
+        ) {
+          drag.active = true;
+        }
+        if (drag.active) {
+          engine.setSelectionBox(
+            normalizeRect(drag.startX, drag.startY, point),
+          );
+        }
+        return;
+      }
       const canvasRect = event.currentTarget.getBoundingClientRect();
       lastPointerXRef.current = Math.max(
         0,
@@ -398,12 +462,25 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
       engine.setHoveredItem(next);
       karst.options.onHoverChange?.(next);
     },
-    [engine, findHit, karst],
+    [boxSelection?.activationDistance, engine, findHit, karst, pointerPosition],
   );
 
   const onPointerDown = useCallback(
     (event: PointerEvent<HTMLCanvasElement>) => {
       const itemId = findHit(event)?.item.id ?? null;
+      if (interactionMode === "box-select" && !itemId) {
+        const point = pointerPosition(event);
+        event.currentTarget.setPointerCapture(event.pointerId);
+        boxDragRef.current = {
+          pointerId: event.pointerId,
+          startX: point.x,
+          startY: point.y,
+          additive: event.shiftKey || event.ctrlKey || event.metaKey,
+          initialIds: [...karst.options.selectedItemIds],
+          active: false,
+        };
+        return;
+      }
       if (!itemId) {
         karst.options.onSelectionChange({
           selectedItemIds: [],
@@ -429,8 +506,57 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
         activeItemId: selected.has(itemId) ? itemId : null,
       });
     },
-    [findHit, karst],
+    [findHit, interactionMode, karst, pointerPosition],
   );
+
+  const finishBoxSelection = useCallback(
+    (event: PointerEvent<HTMLCanvasElement>) => {
+      const drag = boxDragRef.current;
+      if (!drag || drag.pointerId !== event.pointerId) return;
+      boxDragRef.current = null;
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      }
+      if (!drag.active) {
+        engine.setSelectionBox(null);
+        if (!drag.additive) {
+          karst.options.onSelectionChange({
+            selectedItemIds: [],
+            activeItemId: null,
+          });
+        }
+        return;
+      }
+      const point = pointerPosition(event);
+      const rect = normalizeRect(drag.startX, drag.startY, point);
+      const matches = engine.getItemsInRect(
+        rect,
+        boxSelection?.match ?? "intersect",
+      );
+      const selected = new Set(drag.additive ? drag.initialIds : []);
+      for (const match of matches) selected.add(match.item.id);
+      engine.setSelectionBox(null);
+      karst.options.onSelectionChange({
+        selectedItemIds: [...selected],
+        activeItemId: null,
+      });
+    },
+    [boxSelection?.match, engine, karst, pointerPosition],
+  );
+
+  const cancelBoxSelection = useCallback(() => {
+    boxDragRef.current = null;
+    engine.setSelectionBox(null);
+  }, [engine]);
+
+  useEffect(() => {
+    if (interactionMode !== "box-select") cancelBoxSelection();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") cancelBoxSelection();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [cancelBoxSelection, interactionMode]);
 
   const rowHeight = karst.options.rowHeight ?? 36;
   const timelineWidth = Math.max(
@@ -471,68 +597,97 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
         style={{
           position: "relative",
           width: labelWidth + timelineWidth,
-          height: headerHeight + karst.options.rows.length * rowHeight,
+          height: resolvedHeaderHeight + karst.options.rows.length * rowHeight,
           minWidth: "100%",
         }}
       >
         <div
+          data-karst-header=""
           style={{
-            position: "absolute",
+            position: stickyHeader ? "sticky" : "absolute",
             zIndex: 6,
             left: 0,
             top: 0,
-            width: labelWidth,
-            height: headerHeight,
-            transform: `translate(${viewport.scrollLeft}px, ${viewport.scrollTop}px)`,
-            boxSizing: "border-box",
-            padding: "8px 10px",
+            width: labelWidth + viewport.width,
+            height: resolvedHeaderHeight,
+            pointerEvents: "none",
             background: "#f8fafc",
-            borderRight: "1px solid #cbd5e1",
-            borderBottom: "1px solid #cbd5e1",
-            font: "12px system-ui, sans-serif",
+            isolation: "isolate",
+            ...headerStyle,
           }}
         >
-          Rows
+          <div
+            data-karst-corner-header=""
+            style={{
+              position: "absolute",
+              left: 0,
+              top: 0,
+              width: labelWidth,
+              height: resolvedHeaderHeight,
+              boxSizing: "border-box",
+              padding: "8px 10px",
+              background: "#f8fafc",
+              borderRight: "1px solid #cbd5e1",
+              borderBottom: "1px solid #cbd5e1",
+              font: "12px system-ui, sans-serif",
+              ...cornerHeaderStyle,
+            }}
+          >
+            {renderCornerHeader?.({
+              width: labelWidth,
+              height: resolvedHeaderHeight,
+            }) ?? "Rows"}
+          </div>
+          <div
+            data-karst-time-header=""
+            style={{
+              position: "absolute",
+              left: labelWidth,
+              top: 0,
+              width: viewport.width,
+              height: resolvedHeaderHeight,
+              overflow: "hidden",
+              background: "#f8fafc",
+              borderBottom: "1px solid #cbd5e1",
+              font: "11px system-ui, sans-serif",
+              ...timeHeaderStyle,
+            }}
+          >
+            {renderTimeHeader?.({
+              ticks,
+              visibleRange: visibleTime,
+              width: viewport.width,
+              height: resolvedHeaderHeight,
+              view: karst.options.view,
+              timeZone: karst.options.timeZone ?? "UTC",
+              formatTick: (timestamp) => formatter.format(timestamp),
+              getTickOffset: tickLeft,
+            }) ??
+              ticks.map((tick) => (
+                <span
+                  key={tick.timestamp}
+                  style={{
+                    position: "absolute",
+                    left: tickLeft(tick.timestamp),
+                    top: 8,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {formatter.format(tick.timestamp)}
+                </span>
+              ))}
+          </div>
         </div>
         <div
-          style={{
-            position: "absolute",
-            zIndex: 5,
-            left: labelWidth,
-            top: 0,
-            width: viewport.width,
-            height: headerHeight,
-            overflow: "hidden",
-            transform: `translate(${viewport.scrollLeft}px, ${viewport.scrollTop}px)`,
-            background: "#f8fafc",
-            borderBottom: "1px solid #cbd5e1",
-            font: "11px system-ui, sans-serif",
-          }}
-        >
-          {ticks.map((tick) => (
-            <span
-              key={tick.timestamp}
-              style={{
-                position: "absolute",
-                left: tickLeft(tick.timestamp),
-                top: 8,
-                whiteSpace: "nowrap",
-              }}
-            >
-              {formatter.format(tick.timestamp)}
-            </span>
-          ))}
-        </div>
-        <div
+          ref={gridOverlayRef}
           style={{
             position: "absolute",
             zIndex: 2,
             pointerEvents: "none",
             left: labelWidth,
-            top: headerHeight,
+            top: resolvedHeaderHeight,
             width: viewport.width,
             height: viewport.height,
-            transform: `translate(${viewport.scrollLeft}px, ${viewport.scrollTop}px)`,
           }}
         >
           {ticks.map((tick) => (
@@ -559,19 +714,30 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
                 key={row.id}
                 style={{
                   position: "absolute",
-                  zIndex: 4,
                   left: 0,
-                  top: headerHeight + index * rowHeight,
-                  width: labelWidth,
+                  top: resolvedHeaderHeight + index * rowHeight,
+                  width: labelWidth + timelineWidth,
                   height: rowHeight,
-                  boxSizing: "border-box",
-                  overflow: "hidden",
-                  background: "white",
-                  borderBottom: "1px solid #e2e8f0",
-                  transform: `translateX(${viewport.scrollLeft}px)`,
+                  pointerEvents: "none",
                 }}
               >
-                {renderRowLabel?.({ row, index }) ?? row.id}
+                <div
+                  data-karst-row-label=""
+                  style={{
+                    position: stickyRowLabels ? "sticky" : "absolute",
+                    zIndex: 4,
+                    left: 0,
+                    width: labelWidth,
+                    height: rowHeight,
+                    pointerEvents: "auto",
+                    boxSizing: "border-box",
+                    overflow: "hidden",
+                    background: "white",
+                    borderBottom: "1px solid #e2e8f0",
+                  }}
+                >
+                  {renderRowLabel?.({ row, index }) ?? row.id}
+                </div>
               </div>
             );
           })}
@@ -590,16 +756,39 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
                 : undefined
             }
             onPointerDown={index === 2 ? onPointerDown : undefined}
+            onPointerUp={index === 2 ? finishBoxSelection : undefined}
+            onPointerCancel={index === 2 ? cancelBoxSelection : undefined}
             style={{
               position: "absolute",
               zIndex: index + 1,
               left: labelWidth,
-              top: headerHeight,
+              top: resolvedHeaderHeight,
               pointerEvents: index === 2 ? "auto" : "none",
+              cursor:
+                index === 2 && interactionMode === "box-select"
+                  ? "crosshair"
+                  : undefined,
+              touchAction:
+                index === 2 && interactionMode === "box-select"
+                  ? "none"
+                  : undefined,
             }}
           />
         ))}
       </div>
     </div>
   );
+}
+
+function normalizeRect(
+  startX: number,
+  startY: number,
+  end: { x: number; y: number },
+) {
+  return {
+    x: Math.min(startX, end.x),
+    y: Math.min(startY, end.y),
+    width: Math.abs(end.x - startX),
+    height: Math.abs(end.y - startY),
+  };
 }

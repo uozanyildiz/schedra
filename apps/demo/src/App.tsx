@@ -39,6 +39,9 @@ export default function App() {
   const [conflictVisibility, setConflictVisibility] =
     useState<ConflictVisibility>("hide-later");
   const [conflictCount, setConflictCount] = useState(0);
+  const [boxSelectionEnabled, setBoxSelectionEnabled] = useState(false);
+  const [stickyHeader, setStickyHeader] = useState(true);
+  const [stickyRowLabels, setStickyRowLabels] = useState(true);
   const [notice, setNotice] = useState("");
   const noticeTimer = useRef<number | undefined>(undefined);
 
@@ -200,6 +203,28 @@ export default function App() {
           <div className="selection-tools">
             <button
               type="button"
+              className={`conflict-toggle ${stickyHeader ? "active" : ""}`}
+              onClick={() => setStickyHeader((current) => !current)}
+            >
+              Header · {stickyHeader ? "sticky" : "free"}
+            </button>
+            <button
+              type="button"
+              className={`conflict-toggle ${stickyRowLabels ? "active" : ""}`}
+              onClick={() => setStickyRowLabels((current) => !current)}
+            >
+              Rows · {stickyRowLabels ? "sticky" : "free"}
+            </button>
+            <button
+              type="button"
+              className={`conflict-toggle ${boxSelectionEnabled ? "active" : ""}`}
+              onClick={() => setBoxSelectionEnabled((current) => !current)}
+            >
+              <Icon name="target" size={14} />
+              Box select · {boxSelectionEnabled ? "on" : "off"}
+            </button>
+            <button
+              type="button"
               className={`conflict-toggle ${conflictVisibility === "hide-later" ? "active" : ""}`}
               onClick={() =>
                 setConflictVisibility((current) =>
@@ -232,6 +257,9 @@ export default function App() {
           selectedItemIds={selection.selectedItemIds}
           activeItemId={selection.activeItemId}
           conflictVisibility={conflictVisibility}
+          boxSelectionEnabled={boxSelectionEnabled}
+          stickyHeader={stickyHeader}
+          stickyRowLabels={stickyRowLabels}
           onSelectionChange={setSelection}
           onConflictCountChange={setConflictCount}
           onActiveItemChange={setActiveItem}
@@ -243,8 +271,8 @@ export default function App() {
         <span>VIRTUAL ROWS</span>
         <span>CONTROLLED SELECTION</span>
         <span className="footer-note">
-          <Icon name="target" /> Click a bar. Hold Shift or Cmd/Ctrl for
-          multiple.
+          <Icon name="target" /> Click bars, or enable Box select and drag over
+          items.
         </span>
       </footer>
 

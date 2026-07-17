@@ -73,6 +73,22 @@ export class HitTestIndex<TData = unknown> {
   getByItemId(itemId: string): HitRegion<TData> | null {
     return this.byItem.get(itemId) ?? null;
   }
+  queryRect(
+    rect: ItemRect,
+    match: "intersect" | "contained" = "intersect",
+  ): readonly HitRegion<TData>[] {
+    const matches: HitRegion<TData>[] = [];
+    for (const region of this.byItem.values()) {
+      if (
+        match === "contained"
+          ? containsRect(rect, region.rect)
+          : intersects(rect, region.rect)
+      ) {
+        matches.push(region);
+      }
+    }
+    return matches.sort((a, b) => a.order - b.order);
+  }
 }
 
 function contains(rect: ItemRect, x: number, y: number): boolean {
@@ -81,5 +97,23 @@ function contains(rect: ItemRect, x: number, y: number): boolean {
     x <= rect.x + rect.width &&
     y >= rect.y &&
     y <= rect.y + rect.height
+  );
+}
+
+function intersects(a: ItemRect, b: ItemRect): boolean {
+  return (
+    a.x <= b.x + b.width &&
+    a.x + a.width >= b.x &&
+    a.y <= b.y + b.height &&
+    a.y + a.height >= b.y
+  );
+}
+
+function containsRect(outer: ItemRect, inner: ItemRect): boolean {
+  return (
+    inner.x >= outer.x &&
+    inner.y >= outer.y &&
+    inner.x + inner.width <= outer.x + outer.width &&
+    inner.y + inner.height <= outer.y + outer.height
   );
 }

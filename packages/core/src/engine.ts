@@ -65,6 +65,7 @@ export class KarstEngine<TRowData = unknown, TItemData = unknown> {
   };
   private selection: KarstSelection;
   private hoveredItemId: string | null;
+  private selectionBox: ItemRect | null = null;
   private view: KarstView;
   private zoom: number;
   private origin: number;
@@ -171,6 +172,11 @@ export class KarstEngine<TRowData = unknown, TItemData = unknown> {
     this.invalidate("interaction");
   }
 
+  setSelectionBox(rect: ItemRect | null): void {
+    this.selectionBox = rect;
+    this.invalidate("interaction");
+  }
+
   getConflicts(): ConflictResult {
     return this.conflicts;
   }
@@ -189,6 +195,13 @@ export class KarstEngine<TRowData = unknown, TItemData = unknown> {
 
   hitTest(x: number, y: number): HitRegion<TItemData> | null {
     return this.hitIndex.hitTest(x, y, this.rowHeight);
+  }
+
+  getItemsInRect(
+    rect: ItemRect,
+    match: "intersect" | "contained" = "intersect",
+  ): readonly HitRegion<TItemData>[] {
+    return this.hitIndex.queryRect(rect, match);
   }
 
   invalidate(...layers: CanvasLayerName[]): void {
@@ -345,6 +358,28 @@ export class KarstEngine<TRowData = unknown, TItemData = unknown> {
       this.strokeRegion(context, id, this.theme.selectionColor, 2);
     if (this.hoveredItemId)
       this.strokeRegion(context, this.hoveredItemId, this.theme.hoverColor, 1);
+    if (this.selectionBox) {
+      context.save();
+      context.fillStyle = this.theme.selectionColor;
+      context.globalAlpha = 0.12;
+      context.fillRect(
+        this.selectionBox.x,
+        this.selectionBox.y,
+        this.selectionBox.width,
+        this.selectionBox.height,
+      );
+      context.globalAlpha = 1;
+      context.strokeStyle = this.theme.selectionColor;
+      context.lineWidth = 1;
+      context.setLineDash([4, 3]);
+      context.strokeRect(
+        this.selectionBox.x + 0.5,
+        this.selectionBox.y + 0.5,
+        Math.max(0, this.selectionBox.width - 1),
+        Math.max(0, this.selectionBox.height - 1),
+      );
+      context.restore();
+    }
   }
 
   private strokeRegion(
@@ -358,7 +393,15 @@ export class KarstEngine<TRowData = unknown, TItemData = unknown> {
     context.save();
     context.strokeStyle = color;
     context.lineWidth = width;
-    context.strokeRect(rect.x - 1, rect.y - 1, rect.width + 2, rect.height + 2);
+    context.beginPath();
+    context.roundRect(
+      rect.x - 1,
+      rect.y - 1,
+      rect.width + 2,
+      rect.height + 2,
+      Math.min(this.theme.itemRadius + 1, (rect.height + 2) / 2),
+    );
+    context.stroke();
     context.restore();
   }
 

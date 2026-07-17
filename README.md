@@ -131,8 +131,11 @@ pnpm format:check
 Version one includes:
 
 - Immutable, application-owned row data
-- Controlled view, pointer-centered zoom, multi-selection, and active item
+- Controlled view, pointer-centered zoom, click and box multi-selection, and
+  active item
 - Fixed-height virtualized rows
+- Sticky time headers and row labels with configurable size, styles, and
+  renderers
 - Timezone-aware hour, day, and week views
 - Configurable Monday-aligned week ticks
 - Layered canvas rendering

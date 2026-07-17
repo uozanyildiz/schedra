@@ -18,6 +18,13 @@ export function useKarst<TRowData = unknown, TItemData = unknown>(
   const listenersRef = useRef(new Set<() => void>());
   const latestOptions = useRef(options);
   latestOptions.current = options;
+  const itemIds = useMemo(
+    () =>
+      new Set(
+        options.rows.flatMap((row) => row.items.map((item) => item.id)),
+      ),
+    [options.rows],
+  );
   const inspectionRef = useRef<{
     rows: UseKarstOptions<TRowData, TItemData>["rows"] | null;
     conflictVisibility: UseKarstOptions<
@@ -152,12 +159,9 @@ export function useKarst<TRowData = unknown, TItemData = unknown>(
      options object would repeat the 100k-item cleanup scan on every consumer
      render. Only selection-relevant fields belong here. */
   useEffect(() => {
-    const selected = new Set(
-      options.rows.flatMap((row) => row.items.map((i) => i.id)),
-    );
-    const nextIds = options.selectedItemIds.filter((id) => selected.has(id));
+    const nextIds = options.selectedItemIds.filter((id) => itemIds.has(id));
     const nextActive =
-      options.activeItemId && selected.has(options.activeItemId)
+      options.activeItemId && itemIds.has(options.activeItemId)
         ? options.activeItemId
         : null;
     if (
@@ -171,8 +175,8 @@ export function useKarst<TRowData = unknown, TItemData = unknown>(
     }
   }, [
     options.activeItemId,
+    itemIds,
     options.onSelectionChange,
-    options.rows,
     options.selectedItemIds,
   ]);
   /* eslint-enable react-hooks/exhaustive-deps */

@@ -9,6 +9,7 @@ import type {
   KarstView,
   RenderItem,
   SelectionChange,
+  TimelineTick,
   TimeRange,
 } from "@karst/core";
 import type { CSSProperties, ReactNode, RefObject } from "react";
@@ -16,6 +17,22 @@ import type { CSSProperties, ReactNode, RefObject } from "react";
 export interface KarstVisibleRange extends TimeRange {
   rowStartIndex: number;
   rowEndIndex: number;
+}
+
+export interface KarstCornerHeaderRenderArgs {
+  width: number;
+  height: number;
+}
+
+export interface KarstTimeHeaderRenderArgs {
+  ticks: readonly TimelineTick[];
+  visibleRange: TimeRange;
+  width: number;
+  height: number;
+  view: KarstView;
+  timeZone: string;
+  formatTick: (timestamp: number) => string;
+  getTickOffset: (timestamp: number) => number;
 }
 
 export interface UseKarstOptions<
@@ -57,6 +74,19 @@ export interface KarstViewportProps<TRowData = unknown, TItemData = unknown> {
   className?: string;
   style?: CSSProperties;
   labelWidth?: number;
+  headerHeight?: number;
+  headerStyle?: CSSProperties;
+  cornerHeaderStyle?: CSSProperties;
+  timeHeaderStyle?: CSSProperties;
+  stickyHeader?: boolean;
+  stickyRowLabels?: boolean;
+  interactionMode?: "default" | "box-select";
+  boxSelection?: {
+    match?: "intersect" | "contained";
+    activationDistance?: number;
+  };
+  renderCornerHeader?: (args: KarstCornerHeaderRenderArgs) => ReactNode;
+  renderTimeHeader?: (args: KarstTimeHeaderRenderArgs) => ReactNode;
   renderRowLabel?: (args: {
     row: KarstRow<TRowData, TItemData>;
     index: number;
@@ -70,6 +100,16 @@ export interface KarstTimelineProps<
   className?: string;
   style?: CSSProperties;
   labelWidth?: number;
+  headerHeight?: number;
+  headerStyle?: CSSProperties;
+  cornerHeaderStyle?: CSSProperties;
+  timeHeaderStyle?: CSSProperties;
+  stickyHeader?: boolean;
+  stickyRowLabels?: boolean;
+  interactionMode?: KarstViewportProps["interactionMode"];
+  boxSelection?: KarstViewportProps["boxSelection"];
+  renderCornerHeader?: KarstViewportProps["renderCornerHeader"];
+  renderTimeHeader?: KarstViewportProps["renderTimeHeader"];
   renderRowLabel?: KarstViewportProps<TRowData, TItemData>["renderRowLabel"];
 }
 

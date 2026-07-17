@@ -170,6 +170,15 @@ describe("indexes", () => {
       20,
     );
     expect(hits.hitTest(5, 5, 20)?.item.id).toBe("two");
+    const box = { x: -5, y: -5, width: 17, height: 20 };
+    expect(hits.queryRect(box).map((hit) => hit.item.id)).toEqual([
+      "one",
+      "two",
+    ]);
+    expect(hits.queryRect(box, "contained").map((hit) => hit.item.id)).toEqual([
+      "one",
+      "two",
+    ]);
   });
 });
 

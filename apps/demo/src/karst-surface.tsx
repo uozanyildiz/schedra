@@ -13,6 +13,9 @@ interface KarstSurfaceProps {
   selectedItemIds: readonly string[];
   activeItemId: string | null;
   conflictVisibility: "show" | "hide-later";
+  boxSelectionEnabled: boolean;
+  stickyHeader: boolean;
+  stickyRowLabels: boolean;
   onSelectionChange: (selection: SelectionChange) => void;
   onConflictCountChange: (count: number) => void;
   onActiveItemChange: (item: WorkItem | null) => void;
@@ -42,6 +45,9 @@ export function KarstSurface({
   selectedItemIds,
   activeItemId,
   conflictVisibility,
+  boxSelectionEnabled,
+  stickyHeader,
+  stickyRowLabels,
   onSelectionChange,
   onConflictCountChange,
   onActiveItemChange,
@@ -138,6 +144,43 @@ export function KarstSurface({
         karst={karst}
         className="karst-viewport"
         labelWidth={292}
+        headerHeight={40}
+        headerStyle={{ background: "#211f1a" }}
+        cornerHeaderStyle={{
+          background: "#211f1a",
+          color: "#fffdf7",
+          borderColor: "#3d3931",
+          padding: "12px 16px",
+        }}
+        timeHeaderStyle={{
+          background: "#211f1a",
+          color: "#fffdf7",
+          borderColor: "#3d3931",
+        }}
+        stickyHeader={stickyHeader}
+        stickyRowLabels={stickyRowLabels}
+        interactionMode={boxSelectionEnabled ? "box-select" : "default"}
+        boxSelection={{ match: "intersect", activationDistance: 4 }}
+        renderCornerHeader={() => (
+          <span style={{ letterSpacing: ".12em" }}>WORKSTREAMS</span>
+        )}
+        renderTimeHeader={({ ticks, formatTick, getTickOffset }) =>
+          ticks.map((tick) => (
+            <span
+              key={tick.timestamp}
+              style={{
+                position: "absolute",
+                left: getTickOffset(tick.timestamp),
+                top: 12,
+                color: tick.major ? "#ff5b3d" : "#fffdf7",
+                fontWeight: tick.major ? 700 : 500,
+                whiteSpace: "nowrap",
+              }}
+            >
+              {formatTick(tick.timestamp)}
+            </span>
+          ))
+        }
         renderRowLabel={({ row }) => (
           <div className="task-row">
             <span className="team-dot" style={{ background: row.data.color }} />
