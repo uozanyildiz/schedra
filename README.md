@@ -156,5 +156,4 @@ Deferred:
 
 ## License
 
-No license has been selected yet. Do not assume permission to redistribute Karst
-until a license file is added.
+Karst is available under the [MIT License](LICENSE).
