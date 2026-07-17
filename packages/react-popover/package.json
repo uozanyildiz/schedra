@@ -1,7 +1,6 @@
 {
   "name": "@karst/react-popover",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "type": "module",
   "license": "MIT",
   "exports": {
@@ -13,6 +12,9 @@
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "rimraf dist && tsc -p tsconfig.build.json",
     "test": "vitest run --passWithNoTests",
@@ -20,7 +22,7 @@
   },
   "peerDependencies": {
     "@floating-ui/react": "^0.27.0",
-    "@karst/react": "workspace:*",
+    "@karst/react": "workspace:^",
     "react": "^18.0.0 || ^19.0.0"
   },
   "devDependencies": {

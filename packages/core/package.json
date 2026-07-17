@@ -1,7 +1,6 @@
 {
   "name": "@karst/core",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "type": "module",
   "license": "MIT",
   "exports": {
@@ -13,6 +12,9 @@
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "rimraf dist && tsc -p tsconfig.build.json",
     "test": "vitest run",

@@ -26,15 +26,15 @@ Install the generated tarballs in another project:
 
 ```bash
 pnpm add \
-  /path/to/karst/artifacts/karst-core-0.0.0.tgz \
-  /path/to/karst/artifacts/karst-react-0.0.0.tgz
+  /path/to/karst/artifacts/karst-core-0.1.0.tgz \
+  /path/to/karst/artifacts/karst-react-0.1.0.tgz
 ```
 
 For shared popovers, also install:
 
 ```bash
 pnpm add \
-  /path/to/karst/artifacts/karst-react-popover-0.0.0.tgz \
+  /path/to/karst/artifacts/karst-react-popover-0.1.0.tgz \
   @floating-ui/react
 ```
 
