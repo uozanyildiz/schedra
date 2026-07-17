@@ -17,8 +17,8 @@ import { Icon } from "./icons";
 import { KarstSurface } from "./karst-surface";
 
 const RANGE = {
-  start: SCHEDULE_START - 7 * DAY,
-  end: SCHEDULE_START + 8 * DAY,
+  start: SCHEDULE_START - DAY,
+  end: SCHEDULE_START + 2 * DAY,
 };
 
 const VIEW_LABELS: Record<KarstView, string> = {
