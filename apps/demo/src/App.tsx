@@ -37,7 +37,7 @@ export default function App() {
   });
   const [activeItem, setActiveItem] = useState<WorkItem | null>(null);
   const [conflictVisibility, setConflictVisibility] =
-    useState<ConflictVisibility>("show");
+    useState<ConflictVisibility>("hide-later");
   const [conflictCount, setConflictCount] = useState(0);
   const [notice, setNotice] = useState("");
   const noticeTimer = useRef<number | undefined>(undefined);
