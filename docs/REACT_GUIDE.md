@@ -84,6 +84,25 @@ timeline. `stickyHeader` controls the full time header, including the row
 corner. `stickyRowLabels` independently controls the left row-label column.
 Both props are also available on `KarstTimeline`.
 
+### Vertical canvas overscan
+
+Karst paints extra canvas rows above and below the visible viewport by default.
+This prevents an unpainted strip from appearing between the browser scroll and
+the next canvas frame.
+
+```tsx
+<KarstViewport karst={karst} verticalCanvasOverscan={4} />
+```
+
+The value is a row count and defaults to `3`. Set it to `0` to use a
+viewport-sized canvas. The buffer is automatically reduced near the first and
+last row, so it never adds empty bitmap space outside the timeline content.
+
+`overscan` and `verticalCanvasOverscan` solve different problems:
+
+- `overscan` controls how many extra rows are included in row virtualization.
+- `verticalCanvasOverscan` controls how much extra bitmap area is painted.
+
 ### Custom header content and styles
 
 Karst keeps the existing 32px light header when no header options are passed.
@@ -308,5 +327,6 @@ default.
 | `onConflictsChange`    | callback                    | No       | Reports overlaps.                         |
 
 `KarstViewport` also accepts `interactionMode`, `boxSelection`, `labelWidth`,
-the header options above, `stickyHeader`, `stickyRowLabels`, and
-`renderRowLabel`. `KarstTimeline` forwards the same viewport options.
+`verticalCanvasOverscan`, the header options above, `stickyHeader`,
+`stickyRowLabels`, and `renderRowLabel`. `KarstTimeline` forwards the same
+viewport options.

@@ -104,7 +104,7 @@ export interface TimeScale {
 export interface HitRegion<TData = unknown> {
   item: KarstItem<TData>;
   rowId: string;
-  rect: ItemRect;
+  visualRect: ItemRect;
   order: number;
 }
 
@@ -145,7 +145,9 @@ export interface KarstTheme {
 export interface RenderItemArgs<TItemData = unknown> {
   context: CanvasRenderingContext2D;
   item: KarstItem<TItemData>;
-  rect: ItemRect;
+  timeRect: Readonly<ItemRect>;
+  visualRect: ItemRect;
+  renderOrder: number;
   state: RenderItemState;
   theme: KarstTheme;
 }
@@ -153,3 +155,22 @@ export interface RenderItemArgs<TItemData = unknown> {
 export type RenderItem<TItemData = unknown> = (
   args: RenderItemArgs<TItemData>,
 ) => void;
+
+export interface ItemLayout<TItemData = unknown> {
+  item: KarstItem<TItemData>;
+  timeRect: Readonly<ItemRect>;
+  visualRect: ItemRect;
+  renderOrder?: number;
+}
+
+export interface ResolveItemLayoutsArgs<
+  TRowData = unknown,
+  TItemData = unknown,
+> {
+  row: KarstRow<TRowData, TItemData>;
+  layouts: readonly ItemLayout<TItemData>[];
+}
+
+export type ResolveItemLayouts<TRowData = unknown, TItemData = unknown> = (
+  args: ResolveItemLayoutsArgs<TRowData, TItemData>,
+) => readonly ItemLayout<TItemData>[];

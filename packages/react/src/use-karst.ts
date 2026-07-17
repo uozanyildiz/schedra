@@ -20,9 +20,7 @@ export function useKarst<TRowData = unknown, TItemData = unknown>(
   latestOptions.current = options;
   const itemIds = useMemo(
     () =>
-      new Set(
-        options.rows.flatMap((row) => row.items.map((item) => item.id)),
-      ),
+      new Set(options.rows.flatMap((row) => row.items.map((item) => item.id))),
     [options.rows],
   );
   const inspectionRef = useRef<{

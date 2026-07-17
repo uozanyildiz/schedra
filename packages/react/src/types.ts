@@ -8,6 +8,7 @@ import type {
   KarstTheme,
   KarstView,
   RenderItem,
+  ResolveItemLayouts,
   SelectionChange,
   TimelineTick,
   TimeRange,
@@ -50,6 +51,8 @@ export interface UseKarstOptions<
   conflictVisibility?: ConflictVisibility;
   theme?: Partial<KarstTheme>;
   renderItem?: RenderItem<TItemData>;
+  resolveItemLayouts?: ResolveItemLayouts<TRowData, TItemData>;
+  layoutOverflow?: number;
   onSelectionChange: (selection: SelectionChange) => void;
   onHoverChange?: (itemId: string | null) => void;
   onVisibleRangeChange?: (range: KarstVisibleRange) => void;
@@ -74,6 +77,7 @@ export interface KarstViewportProps<TRowData = unknown, TItemData = unknown> {
   className?: string;
   style?: CSSProperties;
   labelWidth?: number;
+  verticalCanvasOverscan?: number;
   headerHeight?: number;
   headerStyle?: CSSProperties;
   cornerHeaderStyle?: CSSProperties;
@@ -100,6 +104,7 @@ export interface KarstTimelineProps<
   className?: string;
   style?: CSSProperties;
   labelWidth?: number;
+  verticalCanvasOverscan?: number;
   headerHeight?: number;
   headerStyle?: CSSProperties;
   cornerHeaderStyle?: CSSProperties;

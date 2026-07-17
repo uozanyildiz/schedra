@@ -16,12 +16,14 @@ import type {
   DataIssue,
   HitRegion,
   ItemRect,
+  ItemLayout,
   KarstRow,
   KarstSelection,
   KarstTheme,
   KarstView,
   KarstViewport,
   RenderItem,
+  ResolveItemLayouts,
   TimeRange,
 } from "./types.js";
 import { validateRows } from "./validation.js";
@@ -41,9 +43,12 @@ export interface KarstEngineOptions<TRowData = unknown, TItemData = unknown> {
   hoveredItemId?: string | null;
   theme?: Partial<KarstTheme>;
   renderItem?: RenderItem<TItemData>;
+  resolveItemLayouts?: ResolveItemLayouts<TRowData, TItemData>;
+  layoutOverflow?: number;
   onDataIssues?: (issues: readonly DataIssue[]) => void;
   onConflictsChange?: (result: ConflictResult) => void;
   onVisibleRangeChange?: (range: TimeRange) => void;
+  onItemLayoutsChange?: () => void;
   requestFrame?: (callback: FrameRequestCallback) => number;
   cancelFrame?: (id: number) => void;
 }
@@ -82,6 +87,9 @@ export class KarstEngine<TRowData = unknown, TItemData = unknown> {
   private conflictVisibility: ConflictVisibility;
   private readonly theme: KarstTheme;
   private readonly renderItem: RenderItem<TItemData>;
+  private readonly resolveItemLayouts:
+    ResolveItemLayouts<TRowData, TItemData> | undefined;
+  private readonly layoutOverflow: number;
   private lastVisibleRange = "";
 
   constructor(
@@ -103,6 +111,8 @@ export class KarstEngine<TRowData = unknown, TItemData = unknown> {
     this.theme = { ...defaultTheme, ...options.theme };
     this.renderItem =
       options.renderItem ?? (defaultRenderItem as RenderItem<TItemData>);
+    this.resolveItemLayouts = options.resolveItemLayouts;
+    this.layoutOverflow = Math.max(0, options.layoutOverflow ?? 0);
     this.setRows(options.rows ?? []);
   }
 
@@ -186,7 +196,7 @@ export class KarstEngine<TRowData = unknown, TItemData = unknown> {
   }
 
   getItemAnchorRect(itemId: string): ItemRect | null {
-    return this.hitIndex.getByItemId(itemId)?.rect ?? null;
+    return this.hitIndex.getByItemId(itemId)?.visualRect ?? null;
   }
 
   getDataItem(itemId: string) {
@@ -246,7 +256,7 @@ export class KarstEngine<TRowData = unknown, TItemData = unknown> {
     }
     if (this.invalidLayers.has("items")) {
       const context = clearLayer(this.layers, "items", width, height);
-      if (context)
+      if (context) {
         this.drawItems(
           context,
           scale,
@@ -254,6 +264,8 @@ export class KarstEngine<TRowData = unknown, TItemData = unknown> {
           rowRange.startIndex,
           rowRange.endIndex,
         );
+        this.options.onItemLayoutsChange?.();
+      }
     }
     if (this.invalidLayers.has("interaction")) {
       const context = clearLayer(this.layers, "interaction", width, height);
@@ -315,25 +327,16 @@ export class KarstEngine<TRowData = unknown, TItemData = unknown> {
     let order = 0;
     for (let rowIndex = start; rowIndex < end; rowIndex++) {
       const row = this.rows[rowIndex]!;
-      for (const item of this.itemIndex.queryRow(row.id, range)) {
-        if (this.conflicts.hiddenItemIds.has(item.id)) continue;
+      const layouts = this.createItemLayouts(row, rowIndex, scale, range);
+      for (const { item, timeRect, visualRect, renderOrder } of layouts) {
+        const resolvedRenderOrder = renderOrder ?? 0;
         const milestone = item.start === item.end;
-        const width = milestone
-          ? this.theme.itemHeight
-          : scale.rangeToWidth(item);
-        const rect: ItemRect = {
-          x: scale.timestampToX(item.start) - this.viewport.scrollLeft,
-          y:
-            rowIndex * this.rowHeight -
-            this.viewport.scrollTop +
-            (this.rowHeight - this.theme.itemHeight) / 2,
-          width,
-          height: this.theme.itemHeight,
-        };
         this.renderItem({
           context,
           item,
-          rect,
+          timeRect,
+          visualRect,
+          renderOrder: resolvedRenderOrder,
           state: {
             selected: this.selection.selectedItemIds.includes(item.id),
             active: this.selection.activeItemId === item.id,
@@ -345,12 +348,88 @@ export class KarstEngine<TRowData = unknown, TItemData = unknown> {
           theme: this.theme,
         });
         this.hitIndex.add(
-          Math.floor(rect.y / this.rowHeight),
-          { item, rowId: row.id, rect, order: order++ },
+          Math.floor(visualRect.y / this.rowHeight),
+          { item, rowId: row.id, visualRect, order: order++ },
           this.rowHeight,
         );
       }
     }
+  }
+
+  private createItemLayouts(
+    row: KarstRow<TRowData, TItemData>,
+    rowIndex: number,
+    scale: ReturnType<typeof createTimeScale>,
+    range: TimeRange,
+  ): readonly ItemLayout<TItemData>[] {
+    const overflowTime =
+      this.layoutOverflow /
+      Math.max(scale.pixelsPerMillisecond, Number.EPSILON);
+    const queryRange = {
+      start: range.start - overflowTime,
+      end: range.end + overflowTime,
+    };
+    const layouts = this.itemIndex
+      .queryRow(row.id, queryRange)
+      .filter((item) => !this.conflicts.hiddenItemIds.has(item.id))
+      .map((item) => {
+        const milestone = item.start === item.end;
+        const timeRect: Readonly<ItemRect> = Object.freeze({
+          x: scale.timestampToX(item.start) - this.viewport.scrollLeft,
+          y:
+            rowIndex * this.rowHeight -
+            this.viewport.scrollTop +
+            (this.rowHeight - this.theme.itemHeight) / 2,
+          width: milestone ? this.theme.itemHeight : scale.rangeToWidth(item),
+          height: this.theme.itemHeight,
+        });
+        return {
+          item,
+          timeRect,
+          visualRect: { ...timeRect },
+          renderOrder: 0,
+        };
+      });
+    const baselineById = new Map(
+      layouts.map((layout) => [
+        layout.item.id,
+        {
+          timeRect: layout.timeRect,
+          visualRect: { ...layout.visualRect },
+        },
+      ]),
+    );
+    const resolved = this.resolveItemLayouts?.({ row, layouts });
+    if (!resolved) return layouts;
+
+    const resolvedById = new Map(
+      resolved
+        .filter(({ item, visualRect }) => isValidRect(visualRect) && item.id)
+        .map(({ item, visualRect, renderOrder }) => [
+          item.id,
+          {
+            visualRect: { ...visualRect },
+            renderOrder: Number.isFinite(renderOrder) ? renderOrder : 0,
+          },
+        ]),
+    );
+    return layouts
+      .map((layout, sourceIndex) => {
+        const resolvedLayout = resolvedById.get(layout.item.id);
+        const baseline = baselineById.get(layout.item.id)!;
+        return {
+          item: layout.item,
+          timeRect: baseline.timeRect,
+          visualRect: resolvedLayout?.visualRect ?? baseline.visualRect,
+          renderOrder: resolvedLayout?.renderOrder ?? 0,
+          sourceIndex,
+        };
+      })
+      .sort(
+        (first, second) =>
+          first.renderOrder - second.renderOrder ||
+          first.sourceIndex - second.sourceIndex,
+      );
   }
 
   private drawInteraction(context: CanvasRenderingContext2D): void {
@@ -388,7 +467,7 @@ export class KarstEngine<TRowData = unknown, TItemData = unknown> {
     color: string,
     width: number,
   ): void {
-    const rect = this.hitIndex.getByItemId(itemId)?.rect;
+    const rect = this.hitIndex.getByItemId(itemId)?.visualRect;
     if (!rect) return;
     context.save();
     context.strokeStyle = color;
@@ -431,6 +510,17 @@ export class KarstEngine<TRowData = unknown, TItemData = unknown> {
     this.conflictKey = nextKey;
     this.options.onConflictsChange?.(this.conflicts);
   }
+}
+
+function isValidRect(rect: ItemRect): boolean {
+  return (
+    Number.isFinite(rect.x) &&
+    Number.isFinite(rect.y) &&
+    Number.isFinite(rect.width) &&
+    Number.isFinite(rect.height) &&
+    rect.width >= 0 &&
+    rect.height >= 0
+  );
 }
 
 export function createKarstEngine<TRowData = unknown, TItemData = unknown>(

@@ -77,15 +77,15 @@ export function KarstSurface({
     onDataIssues: (issues) => {
       if (issues.length) console.warn("Karst demo data issues", issues);
     },
-    renderItem: ({ context, item, rect, state, theme }) => {
+    renderItem: ({ context, item, visualRect, state, theme }) => {
       const data = item.data as WorkItem["data"];
       context.save();
       context.beginPath();
       context.roundRect(
-        rect.x,
-        rect.y,
-        rect.width,
-        rect.height,
+        visualRect.x,
+        visualRect.y,
+        visualRect.width,
+        visualRect.height,
         theme.itemRadius,
       );
       context.fillStyle = state.active
@@ -94,24 +94,28 @@ export function KarstSurface({
           ? theme.conflictColor
           : data.color;
       context.fill();
-      if (data.progress > 0 && !state.active && rect.width > 5) {
+      if (data.progress > 0 && !state.active && visualRect.width > 5) {
         context.save();
         context.clip();
         context.fillStyle = "rgba(0,0,0,.2)";
         context.fillRect(
-          rect.x,
-          rect.y + rect.height - 5,
-          rect.width * (data.progress / 100),
+          visualRect.x,
+          visualRect.y + visualRect.height - 5,
+          visualRect.width * (data.progress / 100),
           5,
         );
         context.restore();
       }
-      if (rect.width > 70) {
+      if (visualRect.width > 70) {
         context.clip();
         context.fillStyle = "#fffdf7";
         context.font = "11px 'DM Mono', monospace";
         context.textBaseline = "middle";
-        context.fillText(data.label, rect.x + 7, rect.y + rect.height / 2);
+        context.fillText(
+          data.label,
+          visualRect.x + 7,
+          visualRect.y + visualRect.height / 2,
+        );
       }
       context.restore();
     },
@@ -144,6 +148,7 @@ export function KarstSurface({
         karst={karst}
         className="karst-viewport"
         labelWidth={292}
+        verticalCanvasOverscan={4}
         headerHeight={40}
         headerStyle={{ background: "#211f1a" }}
         cornerHeaderStyle={{

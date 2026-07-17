@@ -134,6 +134,7 @@ Version one includes:
 - Controlled view, pointer-centered zoom, click and box multi-selection, and
   active item
 - Fixed-height virtualized rows
+- Vertically overscanned canvas buffers for smooth scrolling
 - Sticky time headers and row labels with configurable size, styles, and
   renderers
 - Timezone-aware hour, day, and week views

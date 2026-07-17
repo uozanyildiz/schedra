@@ -1,7 +1,13 @@
-import { render, waitFor } from "@testing-library/react";
+import { act, render, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { KarstController } from "./types.js";
 import { KarstTimeline } from "./karst-timeline.js";
-import { calculatePointerCenteredScroll } from "./karst-viewport.js";
+import {
+  KarstViewport,
+  calculatePointerCenteredScroll,
+  calculateVerticalCanvasBuffer,
+} from "./karst-viewport.js";
+import { useKarst } from "./use-karst.js";
 
 beforeEach(() => {
   vi.stubGlobal(
@@ -46,6 +52,42 @@ describe("calculatePointerCenteredScroll", () => {
         pointerX: 100,
       }),
     ).toBe(0);
+  });
+});
+
+describe("calculateVerticalCanvasBuffer", () => {
+  it("adds full row buffers above and below a middle viewport", () => {
+    expect(
+      calculateVerticalCanvasBuffer({
+        scrollTop: 720,
+        viewportHeight: 360,
+        contentHeight: 3_600,
+        rowHeight: 36,
+        overscanRows: 4,
+      }),
+    ).toEqual({
+      before: 144,
+      after: 144,
+      scrollTop: 576,
+      height: 648,
+    });
+  });
+
+  it("clamps bitmap padding at the content boundaries", () => {
+    expect(
+      calculateVerticalCanvasBuffer({
+        scrollTop: 18,
+        viewportHeight: 360,
+        contentHeight: 400,
+        rowHeight: 36,
+        overscanRows: 4,
+      }),
+    ).toEqual({
+      before: 18,
+      after: 22,
+      scrollTop: 0,
+      height: 400,
+    });
   });
 });
 
@@ -144,6 +186,86 @@ describe("sticky viewport layers", () => {
     expect(time.textContent).toBe("Time 48 hour");
     expect((container.querySelector("canvas") as HTMLElement).style.top).toBe(
       "48px",
+    );
+  });
+});
+
+describe("item anchors", () => {
+  it("publishes the visual anchor after the initial asynchronous layout", () => {
+    const frames: FrameRequestCallback[] = [];
+    vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
+      frames.push(callback);
+      return frames.length;
+    });
+    const context = new Proxy(
+      {},
+      {
+        get(target, property) {
+          if (!(property in target)) {
+            Object.assign(target, { [property]: () => {} });
+          }
+          return Reflect.get(target, property);
+        },
+        set(target, property, value) {
+          return Reflect.set(target, property, value);
+        },
+      },
+    ) as CanvasRenderingContext2D;
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(
+      context,
+    );
+    vi.spyOn(
+      HTMLCanvasElement.prototype,
+      "getBoundingClientRect",
+    ).mockReturnValue({
+      x: 100,
+      y: 50,
+      left: 100,
+      top: 50,
+      right: 500,
+      bottom: 250,
+      width: 400,
+      height: 200,
+      toJSON: () => ({}),
+    });
+    let controller: KarstController<null, null> | null = null;
+
+    function Harness() {
+      const karst = useKarst({
+        rows: [
+          {
+            id: "row",
+            data: null,
+            items: [{ id: "item", start: 0, end: 60_000, data: null }],
+          },
+        ],
+        range: { start: 0, end: 86_400_000 },
+        view: "hour",
+        zoom: 1,
+        selectedItemIds: ["item"],
+        activeItemId: "item",
+        onSelectionChange: vi.fn(),
+        resolveItemLayouts: ({ layouts }) =>
+          layouts.map((layout) => ({
+            ...layout,
+            visualRect: { ...layout.visualRect, x: 25, y: 8 },
+          })),
+      });
+      controller = karst;
+      return <KarstViewport karst={karst} />;
+    }
+
+    render(<Harness />);
+    expect(controller!.getItemAnchorRect("item")).toBeNull();
+    act(() => {
+      while (frames.length) frames.shift()!(0);
+    });
+
+    expect(controller!.getItemAnchorRect("item")).toEqual(
+      expect.objectContaining({
+        x: 125,
+        y: 58,
+      }),
     );
   });
 });

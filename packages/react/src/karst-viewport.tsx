@@ -53,11 +53,41 @@ export function calculatePointerCenteredScroll({
   return Math.max(0, nextScale.timestampToX(timestamp) - pointerX);
 }
 
+export function calculateVerticalCanvasBuffer({
+  scrollTop,
+  viewportHeight,
+  contentHeight,
+  rowHeight,
+  overscanRows,
+}: {
+  scrollTop: number;
+  viewportHeight: number;
+  contentHeight: number;
+  rowHeight: number;
+  overscanRows: number;
+}) {
+  const overscan =
+    Math.max(0, Math.floor(overscanRows)) * Math.max(1, rowHeight);
+  const before = Math.min(Math.max(0, scrollTop), overscan);
+  const remaining = Math.max(
+    0,
+    contentHeight - Math.max(0, scrollTop) - Math.max(1, viewportHeight),
+  );
+  const after = Math.min(remaining, overscan);
+  return {
+    before,
+    after,
+    scrollTop: Math.max(0, scrollTop - before),
+    height: Math.max(1, viewportHeight) + before + after,
+  };
+}
+
 export function KarstViewport<TRowData = unknown, TItemData = unknown>({
   karst,
   className,
   style,
   labelWidth = 180,
+  verticalCanvasOverscan = 3,
   headerHeight = 32,
   headerStyle,
   cornerHeaderStyle,
@@ -75,6 +105,7 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
   const interactionRef = useRef<HTMLCanvasElement>(null);
   const gridOverlayRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<KarstEngine<TRowData, TItemData> | null>(null);
+  const updateAnchorRef = useRef<() => void>(() => {});
   const frameRef = useRef<number | null>(null);
   const hoveredRef = useRef<string | null>(null);
   const boxDragRef = useRef<{
@@ -107,6 +138,7 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
     width: 1,
     height: 1,
   });
+  const [canvasBufferBefore, setCanvasBufferBefore] = useState(0);
   const scrollRef = karst.scrollRef;
   const resolvedHeaderHeight = Math.max(1, headerHeight);
 
@@ -142,15 +174,30 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
               args: Parameters<NonNullable<typeof options.renderItem>>[0],
             ) => karst.options.renderItem?.(args),
           }),
+      ...(options.resolveItemLayouts === undefined
+        ? {}
+        : {
+            resolveItemLayouts: (
+              args: Parameters<
+                NonNullable<typeof options.resolveItemLayouts>
+              >[0],
+            ) => karst.options.resolveItemLayouts?.(args) ?? args.layouts,
+          }),
+      ...(options.layoutOverflow === undefined
+        ? {}
+        : { layoutOverflow: options.layoutOverflow }),
       onVisibleRangeChange: (range) => {
         visibleTimeRef.current = range;
       },
+      onItemLayoutsChange: () => updateAnchorRef.current(),
     });
   }, [
     karst,
     karst.options.conflictVisibility,
     karst.options.overscan,
     Boolean(karst.options.renderItem),
+    Boolean(karst.options.resolveItemLayouts),
+    karst.options.layoutOverflow,
     karst.options.rowHeight,
     karst.options.theme,
     karst.options.timeZone,
@@ -194,42 +241,42 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
       controller._notifyAnchors();
       return;
     }
-    let rowIndex = -1;
     let activeItem: (typeof options.rows)[number]["items"][number] | undefined;
     for (let index = 0; index < options.rows.length; index++) {
       const item = options.rows[index]!.items.find(
         (candidate) => candidate.id === activeId,
       );
       if (item) {
-        rowIndex = index;
         activeItem = item;
         break;
       }
     }
-    if (!activeItem) return;
-    const scale = createTimeScale({
-      view: options.view,
-      origin: options.range.start,
-      zoom: options.zoom,
-    });
-    const rowHeight = options.rowHeight ?? 36;
-    const itemHeight = options.theme?.itemHeight ?? 22;
+    if (!activeItem) {
+      controller._anchors.current = new Map();
+      controller._notifyAnchors();
+      return;
+    }
     const canvasRect = canvas.getBoundingClientRect();
-    const x = scale.timestampToX(activeItem.start) - scroller.scrollLeft;
-    const y =
-      rowIndex * rowHeight - scroller.scrollTop + (rowHeight - itemHeight) / 2;
-    const width =
-      activeItem.start === activeItem.end
-        ? itemHeight
-        : scale.rangeToWidth(activeItem);
+    const anchorRect = engine.getItemAnchorRect(activeItem.id);
+    if (!anchorRect) {
+      controller._anchors.current = new Map();
+      controller._notifyAnchors();
+      return;
+    }
     controller._anchors.current = new Map([
       [
         activeId,
-        new DOMRect(canvasRect.left + x, canvasRect.top + y, width, itemHeight),
+        new DOMRect(
+          canvasRect.left + anchorRect.x,
+          canvasRect.top + anchorRect.y,
+          anchorRect.width,
+          anchorRect.height,
+        ),
       ],
     ]);
     controller._notifyAnchors();
-  }, [karst, scrollRef]);
+  }, [engine, karst, scrollRef]);
+  updateAnchorRef.current = updateAnchor;
 
   useLayoutEffect(() => {
     updateAnchor();
@@ -261,21 +308,35 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
     const height = Math.max(1, scroller.clientHeight - resolvedHeaderHeight);
     const timelineScrollLeft = scroller.scrollLeft;
     const timelineScrollTop = scroller.scrollTop;
+    const rowHeight = options.rowHeight ?? 36;
+    const nextCanvasBuffer = calculateVerticalCanvasBuffer({
+      scrollTop: timelineScrollTop,
+      viewportHeight: height,
+      contentHeight: options.rows.length * rowHeight,
+      rowHeight,
+      overscanRows: verticalCanvasOverscan,
+    });
     setViewport((current) =>
       current.width === width && current.height === height
         ? current
         : { width, height },
     );
+    setCanvasBufferBefore((current) =>
+      current === nextCanvasBuffer.before ? current : nextCanvasBuffer.before,
+    );
+    for (const canvas of [grid, items, interaction]) {
+      canvas.style.top = `${resolvedHeaderHeight - nextCanvasBuffer.before}px`;
+    }
     pinViewportLayers();
     engine.setViewport({
       width,
-      height,
+      height: nextCanvasBuffer.height,
       scrollLeft: timelineScrollLeft,
-      scrollTop: timelineScrollTop,
+      scrollTop: nextCanvasBuffer.scrollTop,
     });
     const range = getVisibleRowRange(
       options.rows.length,
-      options.rowHeight ?? 36,
+      rowHeight,
       timelineScrollTop,
       height,
       options.overscan ?? 2,
@@ -315,6 +376,7 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
     resolvedHeaderHeight,
     scrollRef,
     updateAnchor,
+    verticalCanvasOverscan,
   ]);
 
   const scheduleSync = useCallback(() => {
@@ -762,7 +824,7 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
               position: "absolute",
               zIndex: index + 1,
               left: labelWidth,
-              top: resolvedHeaderHeight,
+              top: resolvedHeaderHeight - canvasBufferBefore,
               pointerEvents: index === 2 ? "auto" : "none",
               cursor:
                 index === 2 && interactionMode === "box-select"

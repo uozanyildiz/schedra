@@ -9,6 +9,7 @@ export function KarstTimeline<TRowData = unknown, TItemData = unknown>(
     className,
     style,
     labelWidth,
+    verticalCanvasOverscan,
     headerHeight,
     headerStyle,
     cornerHeaderStyle,
@@ -29,6 +30,9 @@ export function KarstTimeline<TRowData = unknown, TItemData = unknown>(
       {...(className === undefined ? {} : { className })}
       {...(style === undefined ? {} : { style })}
       {...(labelWidth === undefined ? {} : { labelWidth })}
+      {...(verticalCanvasOverscan === undefined
+        ? {}
+        : { verticalCanvasOverscan })}
       {...(headerHeight === undefined ? {} : { headerHeight })}
       {...(headerStyle === undefined ? {} : { headerStyle })}
       {...(cornerHeaderStyle === undefined ? {} : { cornerHeaderStyle })}

@@ -56,35 +56,39 @@ export function clearLayer(
 export const defaultRenderItem: RenderItem = ({
   context,
   item,
-  rect,
+  visualRect,
   state,
   theme,
 }) => {
   context.save();
   context.fillStyle = state.conflicted ? theme.conflictColor : theme.itemFill;
   if (state.milestone) {
-    const size = Math.min(rect.height, 12);
-    context.translate(rect.x, rect.y + rect.height / 2);
+    const size = Math.min(visualRect.height, 12);
+    context.translate(visualRect.x, visualRect.y + visualRect.height / 2);
     context.rotate(Math.PI / 4);
     context.fillStyle = theme.milestoneFill;
     context.fillRect(-size / 2, -size / 2, size, size);
   } else {
-    roundedRect(context, rect, theme.itemRadius);
+    roundedRect(context, visualRect, theme.itemRadius);
     context.fill();
     const label = labelFor(item);
-    if (label && rect.width > 18) {
+    if (label && visualRect.width > 18) {
       context.beginPath();
       context.rect(
-        rect.x + 4,
-        rect.y,
-        Math.max(0, rect.width - 8),
-        rect.height,
+        visualRect.x + 4,
+        visualRect.y,
+        Math.max(0, visualRect.width - 8),
+        visualRect.height,
       );
       context.clip();
       context.fillStyle = theme.itemText;
       context.font = theme.font;
       context.textBaseline = "middle";
-      context.fillText(label, rect.x + 6, rect.y + rect.height / 2);
+      context.fillText(
+        label,
+        visualRect.x + 6,
+        visualRect.y + visualRect.height / 2,
+      );
     }
   }
   context.restore();

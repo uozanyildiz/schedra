@@ -42,14 +42,20 @@ type ItemData = {
 const renderItem: RenderItem<ItemData> = ({
   context,
   item,
-  rect,
+  visualRect,
   state,
   theme,
 }) => {
   context.save();
 
   context.beginPath();
-  context.roundRect(rect.x, rect.y, rect.width, rect.height, theme.itemRadius);
+  context.roundRect(
+    visualRect.x,
+    visualRect.y,
+    visualRect.width,
+    visualRect.height,
+    theme.itemRadius,
+  );
 
   context.fillStyle = state.active
     ? theme.selectionColor
@@ -59,12 +65,16 @@ const renderItem: RenderItem<ItemData> = ({
 
   context.fill();
 
-  if (rect.width > 70) {
+  if (visualRect.width > 70) {
     context.clip();
     context.fillStyle = theme.itemText;
     context.font = theme.font;
     context.textBaseline = "middle";
-    context.fillText(item.data.title, rect.x + 8, rect.y + rect.height / 2);
+    context.fillText(
+      item.data.title,
+      visualRect.x + 8,
+      visualRect.y + visualRect.height / 2,
+    );
   }
 
   context.restore();
@@ -72,6 +82,42 @@ const renderItem: RenderItem<ItemData> = ({
 
 <KarstTimeline renderItem={renderItem} {...props} />;
 ```
+
+## Separate time and visual geometry
+
+`timeRect` is the exact rectangle calculated from an item's timestamps. Karst
+keeps it immutable. `visualRect` is the rectangle used for drawing, hit testing,
+box selection, selection outlines, and popover anchors.
+
+Use `resolveItemLayouts` when a small marker or badge needs a different visual
+size without changing its timestamp:
+
+```tsx
+<KarstTimeline
+  resolveItemLayouts={({ layouts }) =>
+    layouts.map((layout) => ({
+      ...layout,
+      visualRect:
+        layout.item.data.kind === "badge"
+          ? {
+              x: layout.timeRect.x - 5,
+              y: layout.timeRect.y,
+              width: 10,
+              height: layout.timeRect.height,
+            }
+          : { ...layout.timeRect },
+      renderOrder: layout.item.data.kind === "badge" ? 10 : 0,
+    }))
+  }
+  layoutOverflow={10}
+  {...props}
+/>
+```
+
+Lower `renderOrder` values draw first. Higher values draw later and receive
+pointer hits when visual rectangles overlap. Equal values keep the original
+item order. `layoutOverflow` includes nearby time-based items that may be moved
+into the viewport by the layout resolver.
 
 ## Render state
 

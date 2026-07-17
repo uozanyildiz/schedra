@@ -11,6 +11,8 @@ import {
   proposeSelection,
   validateRows,
   visibleTimeRange,
+  type CanvasLayers,
+  type ItemRect,
   type KarstRow,
 } from "../src/index.js";
 
@@ -22,6 +24,30 @@ const row = (
   data: null,
   items: items.map((item) => ({ ...item, data: null })),
 });
+
+function canvasLayers(): CanvasLayers {
+  const context = new Proxy(
+    {},
+    {
+      get(target, property) {
+        if (!(property in target)) {
+          Object.assign(target, { [property]: () => {} });
+        }
+        return Reflect.get(target, property);
+      },
+      set(target, property, value) {
+        return Reflect.set(target, property, value);
+      },
+    },
+  ) as CanvasRenderingContext2D;
+  const canvas = {
+    width: 0,
+    height: 0,
+    style: {},
+    getContext: () => context,
+  } as unknown as HTMLCanvasElement;
+  return { grid: canvas, items: canvas, interaction: canvas };
+}
 
 describe("validateRows", () => {
   it("reports and skips invalid and duplicate data without dropping valid items", () => {
@@ -154,7 +180,7 @@ describe("indexes", () => {
       {
         item: rows[0]!.items[0]!,
         rowId: "a",
-        rect: { x: 0, y: 0, width: 10, height: 10 },
+        visualRect: { x: 0, y: 0, width: 10, height: 10 },
         order: 0,
       },
       20,
@@ -164,7 +190,7 @@ describe("indexes", () => {
       {
         item: { id: "two", start: 0, end: 1, data: null },
         rowId: "a",
-        rect: { x: 0, y: 0, width: 10, height: 10 },
+        visualRect: { x: 0, y: 0, width: 10, height: 10 },
         order: 1,
       },
       20,
@@ -180,9 +206,125 @@ describe("indexes", () => {
       "two",
     ]);
   });
+
+  it("uses the supplied visual rectangle as the exact hit area", () => {
+    const hits = new HitTestIndex();
+    const items = [
+      { id: "trip", start: 0, end: 10, data: null },
+      { id: "terminal", start: 10, end: 11, data: null },
+    ];
+    hits.add(0, {
+      item: items[0]!,
+      rowId: "a",
+      visualRect: { x: 0, y: 0, width: 100, height: 20 },
+      order: 0,
+    });
+    hits.add(0, {
+      item: items[1]!,
+      rowId: "a",
+      visualRect: { x: 90, y: 0, width: 12, height: 20 },
+      order: 1,
+    });
+
+    expect(hits.hitTest(97, 10, 20)?.item.id).toBe("terminal");
+    expect(hits.hitTest(89, 10, 20)?.item.id).toBe("trip");
+    expect(hits.getByItemId("terminal")?.visualRect.width).toBe(12);
+  });
 });
 
 describe("engine", () => {
+  it("keeps exact time geometry separate and renders and hits by visual order", () => {
+    const rendered: Array<{
+      id: string;
+      timeRect: Readonly<ItemRect>;
+      visualRect: ItemRect;
+      renderOrder: number;
+    }> = [];
+    const layoutsChanged = vi.fn();
+    const engine = createKarstEngine({
+      origin: 0,
+      rows: [
+        row("a", [
+          { id: "badge", start: 0, end: 3_600_000 },
+          { id: "trip", start: 0, end: 3_600_000 },
+        ]),
+      ],
+      resolveItemLayouts: ({ layouts }) =>
+        layouts.map((layout) => {
+          if (layout.item.id === "badge") {
+            layout.visualRect.x = 10;
+            return {
+              ...layout,
+              visualRect: {
+                ...layout.visualRect,
+                y: 7,
+                width: 30,
+                height: 18,
+              },
+              renderOrder: 10,
+            };
+          }
+          return {
+            ...layout,
+            visualRect: { x: 0, y: 7, width: 100, height: 18 },
+            renderOrder: 0,
+          };
+        }),
+      renderItem: ({ item, timeRect, visualRect, renderOrder }) => {
+        rendered.push({ id: item.id, timeRect, visualRect, renderOrder });
+      },
+      onItemLayoutsChange: layoutsChanged,
+      requestFrame: () => 1,
+    });
+    engine.attach(canvasLayers());
+    engine.setViewport({
+      width: 200,
+      height: 36,
+      scrollLeft: 0,
+      scrollTop: 0,
+    });
+    engine.draw();
+
+    expect(rendered.map(({ id }) => id)).toEqual(["trip", "badge"]);
+    expect(rendered[1]!.timeRect.x).toBe(0);
+    expect(rendered[1]!.visualRect.x).toBe(10);
+    expect(engine.getItemAnchorRect("badge")).toEqual({
+      x: 10,
+      y: 7,
+      width: 30,
+      height: 18,
+    });
+    expect(engine.hitTest(20, 10)?.item.id).toBe("badge");
+    expect(layoutsChanged).toHaveBeenCalledOnce();
+  });
+
+  it("uses layout overflow to resolve items outside the exact time viewport", () => {
+    const rendered = vi.fn();
+    const engine = createKarstEngine({
+      origin: 0,
+      rows: [row("a", [{ id: "before", start: -60_000, end: -30_000 }])],
+      layoutOverflow: 100,
+      resolveItemLayouts: ({ layouts }) =>
+        layouts.map((layout) => ({
+          ...layout,
+          visualRect: { ...layout.visualRect, x: 4 },
+        })),
+      renderItem: rendered,
+      requestFrame: () => 1,
+    });
+    engine.attach(canvasLayers());
+    engine.setViewport({
+      width: 100,
+      height: 36,
+      scrollLeft: 0,
+      scrollTop: 0,
+    });
+    engine.draw();
+
+    expect(rendered).toHaveBeenCalledOnce();
+    expect(rendered.mock.calls[0]![0].visualRect.x).toBe(4);
+  });
+
   it("batches invalidations and reports data state", () => {
     const callbacks: FrameRequestCallback[] = [];
     const issues = vi.fn();

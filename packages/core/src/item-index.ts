@@ -49,10 +49,11 @@ export class HitTestIndex<TData = unknown> {
   add(
     rowIndex: number,
     region: HitRegion<TData>,
-    rowHeight = region.rect.height,
+    rowHeight = region.visualRect.height,
   ): void {
     const finalRow = Math.floor(
-      (region.rect.y + Math.max(0, region.rect.height - Number.EPSILON)) /
+      (region.visualRect.y +
+        Math.max(0, region.visualRect.height - Number.EPSILON)) /
         Math.max(1, rowHeight),
     );
     for (let index = rowIndex; index <= finalRow; index++) {
@@ -66,7 +67,7 @@ export class HitTestIndex<TData = unknown> {
     const regions = this.byRow.get(Math.floor(y / rowHeight)) ?? [];
     for (let index = regions.length - 1; index >= 0; index--) {
       const region = regions[index]!;
-      if (contains(region.rect, x, y)) return region;
+      if (contains(region.visualRect, x, y)) return region;
     }
     return null;
   }
@@ -81,8 +82,8 @@ export class HitTestIndex<TData = unknown> {
     for (const region of this.byItem.values()) {
       if (
         match === "contained"
-          ? containsRect(rect, region.rect)
-          : intersects(rect, region.rect)
+          ? containsRect(rect, region.visualRect)
+          : intersects(rect, region.visualRect)
       ) {
         matches.push(region);
       }
