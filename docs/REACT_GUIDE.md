@@ -101,6 +101,11 @@ an item inside the multi-selection.
 `activeItemId` identifies the primary item. It is normally the item whose
 popover or details panel is open.
 
+When `zoom` changes, Karst preserves the timestamp under the most recent
+timeline pointer position. If the pointer has not entered the timeline, the
+viewport center is preserved instead. The browser may clamp this adjustment at
+the configured range boundaries.
+
 ## Update data
 
 Update your own row state and pass the new immutable value to Karst.
@@ -169,6 +174,28 @@ karst.scrollToItem("item-99");
 
 These methods are no-ops when their target does not exist.
 
+## Inspect conflicts and invalid data
+
+Callbacks are useful for notifications. The stable controller methods are
+useful when another part of the application needs the current snapshot:
+
+```ts
+const conflicts = karst.getConflicts();
+const issues = karst.getDataIssues();
+```
+
+Both methods return the latest result after immutable `rows` or
+`conflictVisibility` changes.
+
+## Calendar boundaries
+
+Set an IANA timezone such as `"Europe/Istanbul"` or `"America/New_York"`.
+Day and week ticks are calculated from calendar boundaries in that timezone,
+including 23-hour and 25-hour daylight-saving days.
+
+`weekStartsOn` accepts `0` through `6`. Use `1` for Monday, which is the
+default.
+
 ## Main options
 
 | Option                 | Type                        | Required | Purpose                                   |
@@ -182,7 +209,7 @@ These methods are no-ops when their target does not exist.
 | `onSelectionChange`    | `(selection) => void`       | Yes      | Receives proposed selection changes.      |
 | `rowHeight`            | `number`                    | No       | Fixed height for all rows.                |
 | `overscan`             | `number`                    | No       | Extra virtualized rows.                   |
-| `timeZone`             | `string`                    | No       | Time-label display zone.                  |
+| `timeZone`             | `string`                    | No       | Calendar and label timezone; UTC default. |
 | `weekStartsOn`         | `number`                    | No       | First weekday; Monday is `1`.             |
 | `conflictVisibility`   | `"show" \| "hide-later"`    | No       | Conflict rendering policy.                |
 | `theme`                | `Partial<KarstTheme>`       | No       | Default renderer theme.                   |

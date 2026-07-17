@@ -1,4 +1,5 @@
 import {
+  calculateTimelineTicks,
   createKarstEngine,
   createTimeScale,
   getVisibleRowRange,
@@ -27,6 +28,31 @@ type InternalController = KarstController & {
   _notifyAnchors(): void;
 };
 
+export function calculatePointerCenteredScroll({
+  origin,
+  view,
+  previousZoom,
+  nextZoom,
+  scrollLeft,
+  pointerX,
+}: {
+  origin: number;
+  view: "hour" | "day" | "week";
+  previousZoom: number;
+  nextZoom: number;
+  scrollLeft: number;
+  pointerX: number;
+}): number {
+  const previousScale = createTimeScale({
+    view,
+    origin,
+    zoom: previousZoom,
+  });
+  const nextScale = createTimeScale({ view, origin, zoom: nextZoom });
+  const timestamp = previousScale.xToTimestamp(scrollLeft + pointerX);
+  return Math.max(0, nextScale.timestampToX(timestamp) - pointerX);
+}
+
 export function KarstViewport<TRowData = unknown, TItemData = unknown>({
   karst,
   className,
@@ -40,6 +66,20 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
   const engineRef = useRef<KarstEngine<TRowData, TItemData> | null>(null);
   const frameRef = useRef<number | null>(null);
   const hoveredRef = useRef<string | null>(null);
+  const reportingRef = useRef({
+    onConflictsChange: karst.options.onConflictsChange,
+    onDataIssues: karst.options.onDataIssues,
+  });
+  reportingRef.current = {
+    onConflictsChange: karst.options.onConflictsChange,
+    onDataIssues: karst.options.onDataIssues,
+  };
+  const lastPointerXRef = useRef<number | null>(null);
+  const previousZoomRef = useRef({
+    zoom: karst.options.zoom,
+    view: karst.options.view,
+    origin: karst.options.range.start,
+  });
   const firstVisibleRowRef = useRef<string | null>(null);
   const visibleTimeRef = useRef({ start: 0, end: 0 });
   const [visibleTime, setVisibleTime] = useState({ start: 0, end: 0 });
@@ -58,12 +98,13 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
      engine when construction-only configuration changes. */
   const engine = useMemo(() => {
     const options = karst.options;
-    let isConstructing = true;
-    const nextEngine = createKarstEngine<TRowData, TItemData>({
+    return createKarstEngine<TRowData, TItemData>({
       rows: options.rows,
       view: options.view,
       origin: options.range.start,
       zoom: options.zoom,
+      timeZone: options.timeZone ?? "UTC",
+      weekStartsOn: options.weekStartsOn ?? 1,
       ...(options.rowHeight === undefined
         ? {}
         : { rowHeight: options.rowHeight }),
@@ -84,20 +125,10 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
               args: Parameters<NonNullable<typeof options.renderItem>>[0],
             ) => karst.options.renderItem?.(args),
           }),
-      ...(options.onDataIssues === undefined
-        ? {}
-        : { onDataIssues: options.onDataIssues }),
-      onConflictsChange: (result) => {
-        if (!isConstructing) {
-          options.onConflictsChange?.(result.conflicts);
-        }
-      },
       onVisibleRangeChange: (range) => {
         visibleTimeRef.current = range;
       },
     });
-    isConstructing = false;
-    return nextEngine;
   }, [
     karst,
     karst.options.conflictVisibility,
@@ -105,12 +136,16 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
     Boolean(karst.options.renderItem),
     karst.options.rowHeight,
     karst.options.theme,
+    karst.options.timeZone,
+    karst.options.weekStartsOn,
   ]);
   /* eslint-enable react-hooks/exhaustive-deps */
   engineRef.current = engine;
 
   useEffect(() => {
     engine.setRows(karst.options.rows);
+    reportingRef.current.onConflictsChange?.(engine.getConflicts().conflicts);
+    reportingRef.current.onDataIssues?.(engine.getDataIssues());
   }, [engine, karst.options.rows]);
   useEffect(() => {
     engine.setSelection({
@@ -258,6 +293,45 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
     frameRef.current = requestAnimationFrame(syncViewport);
   }, [syncViewport]);
 
+  const currentZoom = karst.options.zoom;
+  const currentView = karst.options.view;
+  const currentOrigin = karst.options.range.start;
+  useLayoutEffect(() => {
+    const previous = previousZoomRef.current;
+    const scroller = scrollRef.current;
+    if (
+      scroller &&
+      previous.zoom !== currentZoom &&
+      previous.view === currentView &&
+      previous.origin === currentOrigin
+    ) {
+      const pointerX =
+        lastPointerXRef.current ??
+        Math.max(0, (scroller.clientWidth - labelWidth) / 2);
+      scroller.scrollLeft = calculatePointerCenteredScroll({
+        origin: currentOrigin,
+        view: currentView,
+        previousZoom: previous.zoom,
+        nextZoom: currentZoom,
+        scrollLeft: scroller.scrollLeft,
+        pointerX,
+      });
+      syncViewport();
+    }
+    previousZoomRef.current = {
+      zoom: currentZoom,
+      view: currentView,
+      origin: currentOrigin,
+    };
+  }, [
+    currentOrigin,
+    currentView,
+    currentZoom,
+    labelWidth,
+    scrollRef,
+    syncViewport,
+  ]);
+
   useLayoutEffect(() => {
     const layers = {
       grid: gridRef.current,
@@ -313,6 +387,11 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
 
   const onPointerMove = useCallback(
     (event: PointerEvent<HTMLCanvasElement>) => {
+      const canvasRect = event.currentTarget.getBoundingClientRect();
+      lastPointerXRef.current = Math.max(
+        0,
+        Math.min(canvasRect.width, event.clientX - canvasRect.left),
+      );
       const next = findHit(event)?.item.id ?? null;
       if (next === hoveredRef.current) return;
       hoveredRef.current = next;
@@ -359,33 +438,22 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
     (karst.options.range.end - karst.options.range.start) *
       pixelsPerMillisecond(karst.options.view, karst.options.zoom),
   );
-  const unitWidth =
-    pixelsPerMillisecond(karst.options.view, karst.options.zoom) *
-    (karst.options.view === "hour"
-      ? 3_600_000
-      : karst.options.view === "day"
-        ? 86_400_000
-        : 604_800_000);
-  const unitMs =
-    karst.options.view === "hour"
-      ? 3_600_000
-      : karst.options.view === "day"
-        ? 86_400_000
-        : 604_800_000;
-  const firstTick =
-    Math.floor((visibleTime.start - karst.options.range.start) / unitMs) *
-      unitMs +
-    karst.options.range.start;
-  const ticks: number[] = [];
-  for (
-    let timestamp = firstTick;
-    timestamp <= visibleTime.end + unitMs;
-    timestamp += unitMs
-  ) {
-    ticks.push(timestamp);
-  }
+  const timeScale = createTimeScale({
+    view: karst.options.view,
+    origin: karst.options.range.start,
+    zoom: karst.options.zoom,
+  });
+  const ticks = calculateTimelineTicks({
+    range: visibleTime,
+    view: karst.options.view,
+    timeZone: karst.options.timeZone ?? "UTC",
+    weekStartsOn: karst.options.weekStartsOn ?? 1,
+  });
+  const tickLeft = (timestamp: number) =>
+    timeScale.timestampToX(timestamp) -
+    timeScale.timestampToX(visibleTime.start);
   const formatter = new Intl.DateTimeFormat(undefined, {
-    timeZone: karst.options.timeZone,
+    timeZone: karst.options.timeZone ?? "UTC",
     ...(karst.options.view === "hour"
       ? { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "short" }
       : karst.options.view === "day"
@@ -441,19 +509,17 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
             font: "11px system-ui, sans-serif",
           }}
         >
-          {ticks.map((timestamp) => (
+          {ticks.map((tick) => (
             <span
-              key={timestamp}
+              key={tick.timestamp}
               style={{
                 position: "absolute",
-                left:
-                  (timestamp - visibleTime.start) *
-                  pixelsPerMillisecond(karst.options.view, karst.options.zoom),
+                left: tickLeft(tick.timestamp),
                 top: 8,
                 whiteSpace: "nowrap",
               }}
             >
-              {formatter.format(timestamp)}
+              {formatter.format(tick.timestamp)}
             </span>
           ))}
         </div>
@@ -467,15 +533,23 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
             width: viewport.width,
             height: viewport.height,
             transform: `translate(${viewport.scrollLeft}px, ${viewport.scrollTop}px)`,
-            backgroundImage:
-              "linear-gradient(to right, rgba(100,116,139,.28) 1px, transparent 1px)",
-            backgroundSize: `${unitWidth}px 100%`,
-            backgroundPositionX: `${-(
-              (visibleTime.start - karst.options.range.start) *
-              pixelsPerMillisecond(karst.options.view, karst.options.zoom)
-            )}px`,
           }}
-        />
+        >
+          {ticks.map((tick) => (
+            <span
+              key={tick.timestamp}
+              style={{
+                position: "absolute",
+                insetBlock: 0,
+                left: tickLeft(tick.timestamp),
+                width: 1,
+                background: tick.major
+                  ? "rgba(100,116,139,.36)"
+                  : "rgba(100,116,139,.18)",
+              }}
+            />
+          ))}
+        </div>
         {karst.options.rows
           .slice(visibleRows.start, visibleRows.end)
           .map((row, offset) => {

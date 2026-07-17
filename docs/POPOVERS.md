@@ -136,6 +136,11 @@ Returned fields:
 | `floatingRef`    | Attach this to the popover element.           |
 | `update()`       | Request a manual position update.             |
 
+The popover remains hidden until Floating UI has a real item anchor, avoiding a
+flash at the page origin. Any timeline scroll calls `onOpenChange(false)`.
+Because open state is controlled, the application decides how to clear
+`activeItemId` while preserving multi-selection.
+
 ## Multi-selection behavior
 
 The popover points to `activeItemId`, not every selected item. Use

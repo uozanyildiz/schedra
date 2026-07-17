@@ -1,4 +1,5 @@
 import { detectConflicts } from "./conflicts.js";
+import { calculateTimelineTicks } from "./calendar.js";
 import { HitTestIndex, ItemIndex } from "./item-index.js";
 import {
   clearLayer,
@@ -31,6 +32,8 @@ export interface KarstEngineOptions<TRowData = unknown, TItemData = unknown> {
   view?: KarstView;
   origin: number;
   zoom?: number;
+  timeZone?: string;
+  weekStartsOn?: number;
   rowHeight?: number;
   overscan?: number;
   conflictVisibility?: ConflictVisibility;
@@ -65,6 +68,8 @@ export class KarstEngine<TRowData = unknown, TItemData = unknown> {
   private view: KarstView;
   private zoom: number;
   private origin: number;
+  private readonly timeZone: string;
+  private readonly weekStartsOn: number;
   private frameId: number | null = null;
   private invalidLayers = new Set<CanvasLayerName>([
     "grid",
@@ -84,6 +89,8 @@ export class KarstEngine<TRowData = unknown, TItemData = unknown> {
     this.origin = options.origin;
     this.view = options.view ?? "hour";
     this.zoom = options.zoom ?? 1;
+    this.timeZone = options.timeZone ?? "UTC";
+    this.weekStartsOn = options.weekStartsOn ?? 1;
     this.rowHeight = options.rowHeight ?? 36;
     this.overscan = options.overscan ?? 2;
     this.conflictVisibility = options.conflictVisibility ?? "show";
@@ -264,25 +271,23 @@ export class KarstEngine<TRowData = unknown, TItemData = unknown> {
       origin: this.origin,
       zoom: this.zoom,
     });
-    const unitWidth = scale.timestampToX(
-      this.origin +
-        (this.view === "hour"
-          ? 3_600_000
-          : this.view === "day"
-            ? 86_400_000
-            : 604_800_000),
+    const timeRange = visibleTimeRange(
+      scale,
+      this.viewport.scrollLeft,
+      this.viewport.width,
     );
-    if (unitWidth > 0) {
-      const first =
-        Math.floor(this.viewport.scrollLeft / unitWidth) * unitWidth;
-      context.fillStyle = this.theme.majorGridLine;
-      for (
-        let x = first - this.viewport.scrollLeft;
-        x <= this.viewport.width;
-        x += unitWidth
-      ) {
-        context.fillRect(Math.round(x), 0, 1, this.viewport.height);
-      }
+    const ticks = calculateTimelineTicks({
+      range: timeRange,
+      view: this.view,
+      timeZone: this.timeZone,
+      weekStartsOn: this.weekStartsOn,
+    });
+    for (const tick of ticks) {
+      const x = scale.timestampToX(tick.timestamp) - this.viewport.scrollLeft;
+      context.fillStyle = tick.major
+        ? this.theme.majorGridLine
+        : this.theme.gridLine;
+      context.fillRect(Math.round(x), 0, 1, this.viewport.height);
     }
   }
 

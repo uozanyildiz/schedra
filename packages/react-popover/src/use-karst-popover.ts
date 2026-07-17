@@ -8,7 +8,7 @@ import {
   type UseFloatingReturn,
 } from "@floating-ui/react";
 import type { KarstController } from "@karst/react";
-import { useEffect, useLayoutEffect, useMemo, useReducer } from "react";
+import { useEffect, useLayoutEffect, useMemo, useReducer, useRef } from "react";
 
 export interface UseKarstPopoverOptions {
   karst: KarstController<any, any>;
@@ -40,6 +40,8 @@ export function useKarstPopover({
   offset: offsetValue = 8,
 }: UseKarstPopoverOptions): KarstPopover {
   const [, forceAnchorUpdate] = useReducer((value) => value + 1, 0);
+  const latestState = useRef({ activeItemId, open, onOpenChange });
+  latestState.current = { activeItemId, open, onOpenChange };
   const floating = useFloating({
     open,
     onOpenChange,
@@ -78,6 +80,15 @@ export function useKarstPopover({
   useEffect(
     () =>
       karst.subscribeAnchors(() => {
+        const current = latestState.current;
+        if (
+          current.open &&
+          current.activeItemId &&
+          !karst.getItemAnchorRect(current.activeItemId)
+        ) {
+          current.onOpenChange?.(false);
+          return;
+        }
         forceAnchorUpdate();
         void floating.update();
       }),
@@ -85,10 +96,18 @@ export function useKarstPopover({
   );
 
   useEffect(() => {
-    if (open && (!activeItemId || !karst.getItemAnchorRect(activeItemId))) {
+    if (open && !activeItemId) {
       onOpenChange?.(false);
     }
-  }, [activeItemId, karst, onOpenChange, open]);
+  }, [activeItemId, onOpenChange, open]);
+
+  useEffect(() => {
+    const scroller = karst.scrollRef.current;
+    if (!scroller || !open) return;
+    const closeOnScroll = () => onOpenChange?.(false);
+    scroller.addEventListener("scroll", closeOnScroll, { passive: true });
+    return () => scroller.removeEventListener("scroll", closeOnScroll);
+  }, [karst, onOpenChange, open]);
 
   return {
     open: open && activeItemId !== null,

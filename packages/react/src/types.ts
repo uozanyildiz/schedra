@@ -43,6 +43,8 @@ export interface UseKarstOptions<
 export interface KarstController<TRowData = unknown, TItemData = unknown> {
   readonly options: UseKarstOptions<TRowData, TItemData>;
   readonly scrollRef: RefObject<HTMLDivElement | null>;
+  getConflicts(): readonly KarstConflict[];
+  getDataIssues(): readonly DataIssue[];
   getItemAnchorRect(itemId: string): DOMRect | null;
   subscribeAnchors(listener: () => void): () => void;
   scrollToTime(timestamp: number): void;

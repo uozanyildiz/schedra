@@ -47,3 +47,13 @@ export {
   KarstEngine,
   type KarstEngineOptions,
 } from "./engine.js";
+export {
+  addZonedDays,
+  calculateTimelineTicks,
+  getZonedDateParts,
+  startOfZonedDay,
+  startOfZonedWeek,
+  type CalculateTicksOptions,
+  type TimelineTick,
+  type ZonedDateParts,
+} from "./calendar.js";

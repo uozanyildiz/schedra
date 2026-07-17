@@ -1,4 +1,5 @@
-import { createTimeScale } from "@karst/core";
+import { createTimeScale, detectConflicts, validateRows } from "@karst/core";
+import type { DataIssue, KarstConflict } from "@karst/core";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { KarstController, UseKarstOptions } from "./types.js";
 
@@ -17,6 +18,52 @@ export function useKarst<TRowData = unknown, TItemData = unknown>(
   const listenersRef = useRef(new Set<() => void>());
   const latestOptions = useRef(options);
   latestOptions.current = options;
+  const inspectionRef = useRef<{
+    rows: UseKarstOptions<TRowData, TItemData>["rows"] | null;
+    conflictVisibility: UseKarstOptions<
+      TRowData,
+      TItemData
+    >["conflictVisibility"];
+    conflicts: readonly KarstConflict[];
+    dataIssues: readonly DataIssue[];
+  }>({
+    rows: null,
+    conflictVisibility: undefined,
+    conflicts: [],
+    dataIssues: [],
+  });
+
+  const inspectData = useCallback(() => {
+    const current = latestOptions.current;
+    const cached = inspectionRef.current;
+    if (
+      cached.rows === current.rows &&
+      cached.conflictVisibility === current.conflictVisibility
+    ) {
+      return cached;
+    }
+    const validated = validateRows(current.rows);
+    const next = {
+      rows: current.rows,
+      conflictVisibility: current.conflictVisibility,
+      conflicts: detectConflicts(
+        validated.rows,
+        current.conflictVisibility ?? "show",
+      ).conflicts,
+      dataIssues: validated.issues,
+    };
+    inspectionRef.current = next;
+    return next;
+  }, []);
+
+  const getConflicts = useCallback(
+    () => inspectData().conflicts,
+    [inspectData],
+  );
+  const getDataIssues = useCallback(
+    () => inspectData().dataIssues,
+    [inspectData],
+  );
 
   const subscribeAnchors = useCallback((listener: () => void) => {
     listenersRef.current.add(listener);
@@ -76,6 +123,8 @@ export function useKarst<TRowData = unknown, TItemData = unknown>(
         return latestOptions.current;
       },
       scrollRef,
+      getConflicts,
+      getDataIssues,
       getItemAnchorRect,
       subscribeAnchors,
       scrollToTime,
@@ -90,6 +139,8 @@ export function useKarst<TRowData = unknown, TItemData = unknown>(
     }),
     [
       getItemAnchorRect,
+      getConflicts,
+      getDataIssues,
       scrollToItem,
       scrollToRow,
       scrollToTime,

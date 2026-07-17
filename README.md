@@ -131,14 +131,17 @@ pnpm format:check
 Version one includes:
 
 - Immutable, application-owned row data
-- Controlled view, zoom, multi-selection, and active item
+- Controlled view, pointer-centered zoom, multi-selection, and active item
 - Fixed-height virtualized rows
-- Hour, day, and week views
+- Timezone-aware hour, day, and week views
+- Configurable Monday-aligned week ticks
 - Layered canvas rendering
 - Optional hover events
 - Shared popover positioning
+- Popovers that close when timeline navigation starts
 - Conflict detection
 - Structured invalid-data reporting
+- Direct conflict and data-issue inspection
 - Milestones where `start === end`
 
 Deferred:

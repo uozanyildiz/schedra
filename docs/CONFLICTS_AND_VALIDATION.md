@@ -108,6 +108,16 @@ const karst = useKarst({
 
 Invalid rows or items are skipped. Valid content continues rendering.
 
+## Inspect the current React snapshot
+
+The callbacks report changes. The controller also exposes the current results
+for panels, badges, and commands that need to read them on demand:
+
+```ts
+const conflicts = karst.getConflicts();
+const issues = karst.getDataIssues();
+```
+
 ## Validate outside React
 
 `@karst/core` exports `validateRows`:
