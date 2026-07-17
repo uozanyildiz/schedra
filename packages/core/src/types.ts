@@ -156,6 +156,17 @@ export type RenderItem<TItemData = unknown> = (
   args: RenderItemArgs<TItemData>,
 ) => void;
 
+export interface RenderItemsArgs<TRowData = unknown, TItemData = unknown> {
+  context: CanvasRenderingContext2D;
+  row: KarstRow<TRowData, TItemData>;
+  items: readonly Omit<RenderItemArgs<TItemData>, "context" | "theme">[];
+  theme: KarstTheme;
+}
+
+export type RenderItems<TRowData = unknown, TItemData = unknown> = (
+  args: RenderItemsArgs<TRowData, TItemData>,
+) => void;
+
 export interface ItemLayout<TItemData = unknown> {
   item: KarstItem<TItemData>;
   timeRect: Readonly<ItemRect>;

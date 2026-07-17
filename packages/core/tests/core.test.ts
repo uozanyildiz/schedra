@@ -325,6 +325,35 @@ describe("engine", () => {
     expect(rendered.mock.calls[0]![0].visualRect.x).toBe(4);
   });
 
+  it("can render a row as one batch while preserving item hit regions", () => {
+    const renderItems = vi.fn();
+    const engine = createKarstEngine({
+      origin: 0,
+      rows: [
+        row("a", [
+          { id: "before", start: 0, end: 1_800_000 },
+          { id: "trip", start: 1_800_000, end: 3_600_000 },
+        ]),
+      ],
+      renderItems,
+      requestFrame: () => 1,
+    });
+    engine.attach(canvasLayers());
+    engine.setViewport({
+      width: 200,
+      height: 36,
+      scrollLeft: 0,
+      scrollTop: 0,
+    });
+    engine.draw();
+
+    expect(renderItems).toHaveBeenCalledOnce();
+    expect(renderItems.mock.calls[0]![0].row.id).toBe("a");
+    expect(renderItems.mock.calls[0]![0].items).toHaveLength(2);
+    expect(engine.hitTest(25, 18)?.item.id).toBe("before");
+    expect(engine.hitTest(75, 18)?.item.id).toBe("trip");
+  });
+
   it("batches invalidations and reports data state", () => {
     const callbacks: FrameRequestCallback[] = [];
     const issues = vi.fn();

@@ -13,6 +13,8 @@ export type {
   RenderItem,
   RenderItemArgs,
   RenderItemState,
+  RenderItems,
+  RenderItemsArgs,
   ItemLayout,
   ResolveItemLayouts,
   ResolveItemLayoutsArgs,

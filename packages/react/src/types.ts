@@ -8,6 +8,7 @@ import type {
   KarstTheme,
   KarstView,
   RenderItem,
+  RenderItems,
   ResolveItemLayouts,
   SelectionChange,
   TimelineTick,
@@ -51,6 +52,7 @@ export interface UseKarstOptions<
   conflictVisibility?: ConflictVisibility;
   theme?: Partial<KarstTheme>;
   renderItem?: RenderItem<TItemData>;
+  renderItems?: RenderItems<TRowData, TItemData>;
   resolveItemLayouts?: ResolveItemLayouts<TRowData, TItemData>;
   layoutOverflow?: number;
   onSelectionChange: (selection: SelectionChange) => void;

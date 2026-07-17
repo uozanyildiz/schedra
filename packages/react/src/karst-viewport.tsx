@@ -174,6 +174,13 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
               args: Parameters<NonNullable<typeof options.renderItem>>[0],
             ) => karst.options.renderItem?.(args),
           }),
+      ...(options.renderItems === undefined
+        ? {}
+        : {
+            renderItems: (
+              args: Parameters<NonNullable<typeof options.renderItems>>[0],
+            ) => karst.options.renderItems?.(args),
+          }),
       ...(options.resolveItemLayouts === undefined
         ? {}
         : {
@@ -196,6 +203,7 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
     karst.options.conflictVisibility,
     karst.options.overscan,
     Boolean(karst.options.renderItem),
+    Boolean(karst.options.renderItems),
     Boolean(karst.options.resolveItemLayouts),
     karst.options.layoutOverflow,
     karst.options.rowHeight,

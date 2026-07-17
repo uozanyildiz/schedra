@@ -23,6 +23,7 @@ import type {
   KarstView,
   KarstViewport,
   RenderItem,
+  RenderItems,
   ResolveItemLayouts,
   TimeRange,
 } from "./types.js";
@@ -43,6 +44,7 @@ export interface KarstEngineOptions<TRowData = unknown, TItemData = unknown> {
   hoveredItemId?: string | null;
   theme?: Partial<KarstTheme>;
   renderItem?: RenderItem<TItemData>;
+  renderItems?: RenderItems<TRowData, TItemData>;
   resolveItemLayouts?: ResolveItemLayouts<TRowData, TItemData>;
   layoutOverflow?: number;
   onDataIssues?: (issues: readonly DataIssue[]) => void;
@@ -87,6 +89,7 @@ export class KarstEngine<TRowData = unknown, TItemData = unknown> {
   private conflictVisibility: ConflictVisibility;
   private readonly theme: KarstTheme;
   private readonly renderItem: RenderItem<TItemData>;
+  private readonly renderItems: RenderItems<TRowData, TItemData> | undefined;
   private readonly resolveItemLayouts:
     ResolveItemLayouts<TRowData, TItemData> | undefined;
   private readonly layoutOverflow: number;
@@ -111,6 +114,7 @@ export class KarstEngine<TRowData = unknown, TItemData = unknown> {
     this.theme = { ...defaultTheme, ...options.theme };
     this.renderItem =
       options.renderItem ?? (defaultRenderItem as RenderItem<TItemData>);
+    this.renderItems = options.renderItems;
     this.resolveItemLayouts = options.resolveItemLayouts;
     this.layoutOverflow = Math.max(0, options.layoutOverflow ?? 0);
     this.setRows(options.rows ?? []);
@@ -328,25 +332,43 @@ export class KarstEngine<TRowData = unknown, TItemData = unknown> {
     for (let rowIndex = start; rowIndex < end; rowIndex++) {
       const row = this.rows[rowIndex]!;
       const layouts = this.createItemLayouts(row, rowIndex, scale, range);
-      for (const { item, timeRect, visualRect, renderOrder } of layouts) {
-        const resolvedRenderOrder = renderOrder ?? 0;
-        const milestone = item.start === item.end;
-        this.renderItem({
+      const renderedItems = layouts.map(
+        ({ item, timeRect, visualRect, renderOrder }) => {
+          const resolvedRenderOrder = renderOrder ?? 0;
+          const milestone = item.start === item.end;
+          return {
+            item,
+            timeRect,
+            visualRect,
+            renderOrder: resolvedRenderOrder,
+            state: {
+              selected: this.selection.selectedItemIds.includes(item.id),
+              active: this.selection.activeItemId === item.id,
+              hovered: this.hoveredItemId === item.id,
+              conflicted: this.conflicts.conflictedItemIds.has(item.id),
+              hiddenByConflict: false,
+              milestone,
+            },
+          };
+        },
+      );
+      if (this.renderItems) {
+        this.renderItems({
           context,
-          item,
-          timeRect,
-          visualRect,
-          renderOrder: resolvedRenderOrder,
-          state: {
-            selected: this.selection.selectedItemIds.includes(item.id),
-            active: this.selection.activeItemId === item.id,
-            hovered: this.hoveredItemId === item.id,
-            conflicted: this.conflicts.conflictedItemIds.has(item.id),
-            hiddenByConflict: false,
-            milestone,
-          },
+          row,
+          items: renderedItems,
           theme: this.theme,
         });
+      } else {
+        for (const renderedItem of renderedItems) {
+          this.renderItem({
+            context,
+            ...renderedItem,
+            theme: this.theme,
+          });
+        }
+      }
+      for (const { item, visualRect } of layouts) {
         this.hitIndex.add(
           Math.floor(visualRect.y / this.rowHeight),
           { item, rowId: row.id, visualRect, order: order++ },
