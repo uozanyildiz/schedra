@@ -1,14 +1,14 @@
-# Karst
+# Schedra
 
-Karst is a headless, canvas-based Gantt timeline for large React schedules.
+Schedra is a headless, canvas-based Gantt timeline for large React schedules.
 
 It keeps React responsible for application state and UI while a small,
 framework-independent engine handles time calculations, virtualization, hit
 testing, conflicts, and layered canvas rendering.
 
-> Karst is in early development. The public API may change before version 1.0.
+> Schedra is in early development. The public API may change before version 1.0.
 
-## Why Karst?
+## Why Schedra?
 
 - Render thousands of rows and up to 100,000 in-memory items.
 - Keep item, selection, view, and zoom state inside your application.
@@ -21,20 +21,20 @@ testing, conflicts, and layered canvas rendering.
 
 ## Packages
 
-Karst is published as one package with three entry points:
+Schedra is published as one package with three entry points:
 
-| Import path            | Purpose                                                                                                  |
-| ---------------------- | -------------------------------------------------------------------------------------------------------- |
-| `karst/core`           | Framework-independent engine, validation, conflicts, scales, virtualization, hit testing, and rendering. |
-| `karst/react`          | Controlled React hook and timeline components.                                                           |
-| `karst/react-popover`  | Optional Floating UI integration for one shared popover.                                                 |
-| Internal `@karst/demo` | Reference application and performance playground.                                                        |
+| Import path              | Purpose                                                                                                  |
+| ------------------------ | -------------------------------------------------------------------------------------------------------- |
+| `schedra/core`           | Framework-independent engine, validation, conflicts, scales, virtualization, hit testing, and rendering. |
+| `schedra/react`          | Controlled React hook and timeline components.                                                           |
+| `schedra/react-popover`  | Optional Floating UI integration for one shared popover.                                                 |
+| Internal `@schedra/demo` | Reference application and performance playground.                                                        |
 
 ## Quick example
 
 ```tsx
-import type { KarstRow, SelectionChange } from "karst/core";
-import { KarstTimeline } from "karst/react";
+import type { SchedraRow, SelectionChange } from "schedra/core";
+import { SchedraTimeline } from "schedra/react";
 import { useState } from "react";
 
 type RowData = {
@@ -46,7 +46,7 @@ type ItemData = {
   color: string;
 };
 
-const rows: KarstRow<RowData, ItemData>[] = [
+const rows: SchedraRow<RowData, ItemData>[] = [
   {
     id: "team-design",
     data: { name: "Design" },
@@ -71,7 +71,7 @@ export function Schedule() {
   });
 
   return (
-    <KarstTimeline
+    <SchedraTimeline
       rows={rows}
       range={{
         start: new Date("2026-07-17T00:00:00Z").getTime(),
@@ -91,7 +91,7 @@ export function Schedule() {
 }
 ```
 
-Karst treats item times as half-open intervals: `[start, end)`. An item ending
+Schedra treats item times as half-open intervals: `[start, end)`. An item ending
 at `10:00` does not conflict with another item starting at `10:00`.
 
 ## Documentation
@@ -167,4 +167,4 @@ Deferred:
 
 ## License
 
-Karst is available under the [MIT License](LICENSE).
+Schedra is available under the [MIT License](LICENSE).

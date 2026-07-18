@@ -1,7 +1,7 @@
-import { createTimeScale, detectConflicts, validateRows } from "@karst/core";
-import type { DataIssue, KarstConflict } from "@karst/core";
+import { createTimeScale, detectConflicts, validateRows } from "@schedra/core";
+import type { DataIssue, SchedraConflict } from "@schedra/core";
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import type { KarstController, UseKarstOptions } from "./types.js";
+import type { SchedraController, UseSchedraOptions } from "./types.js";
 
 export function pixelsPerMillisecond(
   view: "hour" | "day" | "week",
@@ -10,9 +10,9 @@ export function pixelsPerMillisecond(
   return createTimeScale({ view, origin: 0, zoom }).pixelsPerMillisecond;
 }
 
-export function useKarst<TRowData = unknown, TItemData = unknown>(
-  options: UseKarstOptions<TRowData, TItemData>,
-): KarstController<TRowData, TItemData> {
+export function useSchedra<TRowData = unknown, TItemData = unknown>(
+  options: UseSchedraOptions<TRowData, TItemData>,
+): SchedraController<TRowData, TItemData> {
   const scrollRef = useRef<HTMLDivElement>(null);
   const anchorsRef = useRef(new Map<string, DOMRect>());
   const listenersRef = useRef(new Set<() => void>());
@@ -24,12 +24,12 @@ export function useKarst<TRowData = unknown, TItemData = unknown>(
     [options.rows],
   );
   const inspectionRef = useRef<{
-    rows: UseKarstOptions<TRowData, TItemData>["rows"] | null;
-    conflictVisibility: UseKarstOptions<
+    rows: UseSchedraOptions<TRowData, TItemData>["rows"] | null;
+    conflictVisibility: UseSchedraOptions<
       TRowData,
       TItemData
     >["conflictVisibility"];
-    conflicts: readonly KarstConflict[];
+    conflicts: readonly SchedraConflict[];
     dataIssues: readonly DataIssue[];
   }>({
     rows: null,

@@ -1,19 +1,19 @@
 {
-  "name": "@karst/react-popover",
+  "name": "@schedra/react-popover",
   "private": true,
   "version": "0.1.0",
-  "description": "Floating UI popover integration for @karst/react timelines.",
+  "description": "Floating UI popover integration for @schedra/react timelines.",
   "type": "module",
   "license": "MIT",
   "author": "Uğur Ozan Yıldız",
-  "homepage": "https://github.com/uozanyildiz/karst#readme",
+  "homepage": "https://github.com/uozanyildiz/schedra#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/uozanyildiz/karst.git",
+    "url": "git+https://github.com/uozanyildiz/schedra.git",
     "directory": "packages/react-popover"
   },
   "bugs": {
-    "url": "https://github.com/uozanyildiz/karst/issues"
+    "url": "https://github.com/uozanyildiz/schedra/issues"
   },
   "keywords": [
     "react",
@@ -45,12 +45,12 @@
   },
   "peerDependencies": {
     "@floating-ui/react": "^0.27.0",
-    "@karst/react": "workspace:^",
+    "@schedra/react": "workspace:^",
     "react": "^18.0.0 || ^19.0.0"
   },
   "devDependencies": {
     "@floating-ui/react": "^0.27.16",
-    "@karst/react": "workspace:*",
+    "@schedra/react": "workspace:*",
     "@testing-library/react": "^16.3.0",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",

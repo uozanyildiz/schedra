@@ -1,12 +1,17 @@
-import type { DataIssue, KarstItem, KarstRow, ValidatedData } from "./types.js";
+import type {
+  DataIssue,
+  SchedraItem,
+  SchedraRow,
+  ValidatedData,
+} from "./types.js";
 
 export function validateRows<TRowData, TItemData>(
-  rows: readonly KarstRow<TRowData, TItemData>[],
+  rows: readonly SchedraRow<TRowData, TItemData>[],
 ): ValidatedData<TRowData, TItemData> {
   const issues: DataIssue[] = [];
   const rowIds = new Set<string>();
   const itemIds = new Set<string>();
-  const validRows: KarstRow<TRowData, TItemData>[] = [];
+  const validRows: SchedraRow<TRowData, TItemData>[] = [];
 
   for (const row of rows) {
     if (rowIds.has(row.id)) {
@@ -16,7 +21,7 @@ export function validateRows<TRowData, TItemData>(
       continue;
     }
     rowIds.add(row.id);
-    const items: KarstItem<TItemData>[] = [];
+    const items: SchedraItem<TItemData>[] = [];
     for (const item of row.items) {
       if (itemIds.has(item.id)) {
         issues.push(

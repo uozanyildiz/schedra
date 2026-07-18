@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { pixelsPerMillisecond } from "./use-karst.js";
+import { pixelsPerMillisecond } from "./use-schedra.js";
 
 describe("pixelsPerMillisecond", () => {
   it("uses the core time scale widths for each view", () => {

@@ -1,6 +1,6 @@
 # Custom rendering and themes
 
-Karst ships a default canvas renderer. Consumers can adjust its theme or replace
+Schedra ships a default canvas renderer. Consumers can adjust its theme or replace
 item drawing completely.
 
 ## Theme the default renderer
@@ -23,15 +23,15 @@ const theme = {
   itemRadius: 5,
 };
 
-<KarstTimeline theme={theme} {...props} />;
+<SchedraTimeline theme={theme} {...props} />;
 ```
 
-You may pass a partial theme. Missing properties use Karst defaults.
+You may pass a partial theme. Missing properties use Schedra defaults.
 
 ## Draw custom items
 
 ```tsx
-import type { RenderItem } from "karst/core";
+import type { RenderItem } from "schedra/core";
 
 type ItemData = {
   title: string;
@@ -80,12 +80,12 @@ const renderItem: RenderItem<ItemData> = ({
   context.restore();
 };
 
-<KarstTimeline renderItem={renderItem} {...props} />;
+<SchedraTimeline renderItem={renderItem} {...props} />;
 ```
 
 ## Separate time and visual geometry
 
-`timeRect` is the exact rectangle calculated from an item's timestamps. Karst
+`timeRect` is the exact rectangle calculated from an item's timestamps. Schedra
 keeps it immutable. `visualRect` is the rectangle used for drawing, hit testing,
 box selection, selection outlines, and popover anchors.
 
@@ -93,7 +93,7 @@ Use `resolveItemLayouts` when a small marker or badge needs a different visual
 size without changing its timestamp:
 
 ```tsx
-<KarstTimeline
+<SchedraTimeline
   resolveItemLayouts={({ layouts }) =>
     layouts.map((layout) => ({
       ...layout,
@@ -134,7 +134,7 @@ interface RenderItemState {
 }
 ```
 
-Use this state only for drawing. Do not mutate application state or Karst from
+Use this state only for drawing. Do not mutate application state or Schedra from
 inside a render function.
 
 ## Canvas safety
@@ -157,7 +157,7 @@ Cache reusable drawing resources outside the callback when needed.
 Row labels are normal React DOM, not canvas:
 
 ```tsx
-<KarstTimeline
+<SchedraTimeline
   renderRowLabel={({ row, index }) => (
     <div className="row-label">
       <span>{index + 1}</span>
@@ -169,4 +169,4 @@ Row labels are normal React DOM, not canvas:
 />
 ```
 
-Karst mounts labels only for virtualized visible rows.
+Schedra mounts labels only for virtualized visible rows.

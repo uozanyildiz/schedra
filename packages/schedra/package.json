@@ -1,18 +1,18 @@
 {
-  "name": "karst",
+  "name": "schedra",
   "version": "0.1.0",
   "description": "Headless canvas-based Gantt timeline for large React schedules.",
   "type": "module",
   "license": "MIT",
   "author": "Uğur Ozan Yıldız",
-  "homepage": "https://github.com/uozanyildiz/karst#readme",
+  "homepage": "https://github.com/uozanyildiz/schedra#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/uozanyildiz/karst.git",
-    "directory": "packages/karst"
+    "url": "git+https://github.com/uozanyildiz/schedra.git",
+    "directory": "packages/schedra"
   },
   "bugs": {
-    "url": "https://github.com/uozanyildiz/karst/issues"
+    "url": "https://github.com/uozanyildiz/schedra/issues"
   },
   "keywords": [
     "react",
@@ -47,7 +47,7 @@
   },
   "scripts": {
     "build": "pnpm build:dependencies && node scripts/build-package.mjs",
-    "build:dependencies": "pnpm --filter @karst/core build && pnpm --filter @karst/react build && pnpm --filter @karst/react-popover build",
+    "build:dependencies": "pnpm --filter @schedra/core build && pnpm --filter @schedra/react build && pnpm --filter @schedra/react-popover build",
     "prepack": "pnpm build",
     "test": "pnpm build && node --test tests/package.test.mjs",
     "typecheck": "pnpm build && tsc -p tsconfig.json --noEmit"
@@ -70,9 +70,9 @@
   },
   "devDependencies": {
     "@floating-ui/react": "^0.27.16",
-    "@karst/core": "workspace:*",
-    "@karst/react": "workspace:*",
-    "@karst/react-popover": "workspace:*",
+    "@schedra/core": "workspace:*",
+    "@schedra/react": "workspace:*",
+    "@schedra/react-popover": "workspace:*",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "react": "^19.1.0",

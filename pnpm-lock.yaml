@@ -41,9 +41,9 @@ importers:
 
   apps/demo:
     dependencies:
-      karst:
+      schedra:
         specifier: workspace:*
-        version: link:../../packages/karst
+        version: link:../../packages/schedra
       react:
         specifier: ^19.1.0
         version: 19.2.7
@@ -85,18 +85,18 @@ importers:
         specifier: ^3.2.4
         version: 3.2.7(@types/node@24.13.3)(jiti@2.7.0)(jsdom@26.1.0)(lightningcss@1.32.0)
 
-  packages/karst:
+  packages/schedra:
     devDependencies:
       '@floating-ui/react':
         specifier: ^0.27.16
         version: 0.27.20(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@karst/core':
+      '@schedra/core':
         specifier: workspace:*
         version: link:../core
-      '@karst/react':
+      '@schedra/react':
         specifier: workspace:*
         version: link:../react
-      '@karst/react-popover':
+      '@schedra/react-popover':
         specifier: workspace:*
         version: link:../react-popover
       '@types/react':
@@ -117,7 +117,7 @@ importers:
 
   packages/react:
     devDependencies:
-      '@karst/core':
+      '@schedra/core':
         specifier: workspace:*
         version: link:../core
       '@testing-library/react':
@@ -150,7 +150,7 @@ importers:
       '@floating-ui/react':
         specifier: ^0.27.16
         version: 0.27.20(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@karst/react':
+      '@schedra/react':
         specifier: workspace:*
         version: link:../react
       '@testing-library/react':

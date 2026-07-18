@@ -1,7 +1,7 @@
-import type { KarstSelection, SelectionChange } from "./types.js";
+import type { SchedraSelection, SelectionChange } from "./types.js";
 
 export function proposeSelection(
-  selection: KarstSelection,
+  selection: SchedraSelection,
   itemId: string,
   additive = false,
 ): SelectionChange {
@@ -22,7 +22,7 @@ export function proposeSelection(
 }
 
 export function cleanSelection(
-  selection: KarstSelection,
+  selection: SchedraSelection,
   existingItemIds: ReadonlySet<string>,
 ): SelectionChange {
   const selectedItemIds = selection.selectedItemIds.filter((id) =>

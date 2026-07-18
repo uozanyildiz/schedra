@@ -3,12 +3,12 @@ import {
   detectConflicts,
   ItemIndex,
   validateRows,
-  type KarstRow,
+  type SchedraRow,
 } from "../src/index.js";
 
 describe("100k-item benchmark", () => {
   it("indexes, validates, and detects conflicts in a practical time budget", () => {
-    const rows: KarstRow[] = Array.from({ length: 1_000 }, (_, rowIndex) => ({
+    const rows: SchedraRow[] = Array.from({ length: 1_000 }, (_, rowIndex) => ({
       id: `row-${rowIndex}`,
       data: null,
       items: Array.from({ length: 100 }, (_, itemIndex) => {

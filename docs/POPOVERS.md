@@ -1,6 +1,6 @@
 # Shared popovers
 
-Canvas items are pixels, not DOM elements. Karst therefore uses one shared DOM
+Canvas items are pixels, not DOM elements. Schedra therefore uses one shared DOM
 popover and positions it against the active item's canvas rectangle.
 
 Do not render one popover for every item. A single shared popover keeps DOM and
@@ -8,13 +8,13 @@ memory use stable even when the timeline contains 100,000 items.
 
 ## Install
 
-`karst/react-popover` has a peer dependency on Floating UI:
+`schedra/react-popover` has a peer dependency on Floating UI:
 
 ```bash
 pnpm add @floating-ui/react
 ```
 
-Until Karst is published, follow the local linking steps in
+Until Schedra is published, follow the local linking steps in
 [Getting started](GETTING_STARTED.md).
 
 ## Example
@@ -22,9 +22,9 @@ Until Karst is published, follow the local linking steps in
 The popover hook needs a controller, so use the hook-first React API.
 
 ```tsx
-import type { SelectionChange } from "karst/core";
-import { KarstViewport, useKarst } from "karst/react";
-import { useKarstPopover } from "karst/react-popover";
+import type { SelectionChange } from "schedra/core";
+import { SchedraViewport, useSchedra } from "schedra/react";
+import { useSchedraPopover } from "schedra/react-popover";
 import { useMemo, useState } from "react";
 
 function Schedule() {
@@ -45,7 +45,7 @@ function Schedule() {
     return null;
   }, [rows, selection.activeItemId]);
 
-  const karst = useKarst({
+  const schedra = useSchedra({
     rows,
     range,
     view: "hour",
@@ -55,8 +55,8 @@ function Schedule() {
     onSelectionChange: setSelection,
   });
 
-  const popover = useKarstPopover({
-    karst,
+  const popover = useSchedraPopover({
+    schedra,
     activeItemId: selection.activeItemId,
     open: activeEntry !== null,
     placement: "top",
@@ -73,7 +73,7 @@ function Schedule() {
 
   return (
     <>
-      <KarstViewport karst={karst} style={{ height: 600 }} />
+      <SchedraViewport schedra={schedra} style={{ height: 600 }} />
 
       {activeEntry && popover.open ? (
         <aside
@@ -116,8 +116,8 @@ The hook supplies:
 ## API
 
 ```ts
-useKarstPopover({
-  karst,
+useSchedraPopover({
+  schedra,
   activeItemId,
   open,
   onOpenChange,

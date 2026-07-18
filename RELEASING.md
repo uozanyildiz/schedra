@@ -1,4 +1,4 @@
-# Releasing Karst
+# Releasing Schedra
 
 ## One-time setup
 
@@ -10,11 +10,8 @@
    npm whoami
    ```
 
-3. Create and push the GitHub repository before publishing:
-
-   ```bash
-   gh repo create uozanyildiz/karst --public --source=. --remote=origin --push
-   ```
+3. Confirm that the GitHub repository remote points to
+   `https://github.com/uozanyildiz/schedra`.
 
 ## Publish
 
@@ -30,11 +27,11 @@ Publish the package:
 pnpm release:publish
 ```
 
-Karst is one npm package with `karst/core`, `karst/react`, and
-`karst/react-popover` entry points.
+Schedra is one npm package with `schedra/core`, `schedra/react`, and
+`schedra/react-popover` entry points.
 
 After publishing, verify them:
 
 ```bash
-npm view karst version
+npm view schedra version
 ```

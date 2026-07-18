@@ -1,14 +1,14 @@
-import type { KarstView, SelectionChange, TimeRange } from "karst/core";
-import { KarstViewport, useKarst } from "karst/react";
-import { useKarstPopover } from "karst/react-popover";
+import type { SchedraView, SelectionChange, TimeRange } from "schedra/core";
+import { SchedraViewport, useSchedra } from "schedra/react";
+import { useSchedraPopover } from "schedra/react-popover";
 import { useEffect, useMemo } from "react";
 import type { WorkItem, Workstream } from "./data";
 import { ROW_HEIGHT, SCHEDULE_START } from "./data";
 
-interface KarstSurfaceProps {
+interface SchedraSurfaceProps {
   rows: readonly Workstream[];
   range: TimeRange;
-  view: KarstView;
+  view: SchedraView;
   zoom: number;
   selectedItemIds: readonly string[];
   activeItemId: string | null;
@@ -37,7 +37,7 @@ function formatDuration(start: number, end: number) {
   return remainder ? `${hours}h ${remainder}m` : `${hours}h`;
 }
 
-export function KarstSurface({
+export function SchedraSurface({
   rows,
   range,
   view,
@@ -51,7 +51,7 @@ export function KarstSurface({
   onSelectionChange,
   onConflictCountChange,
   onActiveItemChange,
-}: KarstSurfaceProps) {
+}: SchedraSurfaceProps) {
   const activeEntry = useMemo(() => {
     for (const row of rows) {
       const item = row.items.find((candidate) => candidate.id === activeItemId);
@@ -60,7 +60,7 @@ export function KarstSurface({
     return null;
   }, [activeItemId, rows]);
 
-  const karst = useKarst({
+  const schedra = useSchedra({
     rows,
     range,
     view,
@@ -75,7 +75,7 @@ export function KarstSurface({
     onSelectionChange,
     onConflictsChange: (conflicts) => onConflictCountChange(conflicts.length),
     onDataIssues: (issues) => {
-      if (issues.length) console.warn("Karst demo data issues", issues);
+      if (issues.length) console.warn("Schedra demo data issues", issues);
     },
     renderItem: ({ context, item, visualRect, state, theme }) => {
       const data = item.data as WorkItem["data"];
@@ -121,8 +121,8 @@ export function KarstSurface({
     },
   });
 
-  const popover = useKarstPopover({
-    karst,
+  const popover = useSchedraPopover({
+    schedra,
     activeItemId,
     open: Boolean(activeEntry),
     onOpenChange: (open) => {
@@ -139,14 +139,14 @@ export function KarstSurface({
   }, [activeEntry, onActiveItemChange]);
 
   useEffect(() => {
-    karst.scrollToTime(SCHEDULE_START);
-  }, [karst]);
+    schedra.scrollToTime(SCHEDULE_START);
+  }, [schedra]);
 
   return (
     <div className="gantt-shell">
-      <KarstViewport
-        karst={karst}
-        className="karst-viewport"
+      <SchedraViewport
+        schedra={schedra}
+        className="schedra-viewport"
         labelWidth={292}
         verticalCanvasOverscan={4}
         headerHeight={40}

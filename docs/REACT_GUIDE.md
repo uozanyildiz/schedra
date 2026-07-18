@@ -1,16 +1,16 @@
 # React guide
 
-`karst/react` provides two integration styles:
+`schedra/react` provides two integration styles:
 
-- `KarstTimeline` for a compact setup.
-- `useKarst` with `KarstViewport` for custom layouts and popovers.
+- `SchedraTimeline` for a compact setup.
+- `useSchedra` with `SchedraViewport` for custom layouts and popovers.
 
 ## Component-first usage
 
-`KarstTimeline` creates the controller and viewport for you.
+`SchedraTimeline` creates the controller and viewport for you.
 
 ```tsx
-<KarstTimeline
+<SchedraTimeline
   rows={rows}
   range={range}
   view={view}
@@ -27,14 +27,14 @@ component.
 
 ## Hook-first usage
 
-Use `useKarst` when you need custom layout, programmatic scrolling, or a shared
+Use `useSchedra` when you need custom layout, programmatic scrolling, or a shared
 popover.
 
 ```tsx
-import { KarstViewport, useKarst } from "karst/react";
+import { SchedraViewport, useSchedra } from "schedra/react";
 
 function Schedule() {
-  const karst = useKarst({
+  const schedra = useSchedra({
     rows,
     range,
     view,
@@ -47,14 +47,16 @@ function Schedule() {
 
   return (
     <>
-      <button onClick={() => karst.scrollToTime(Date.now())}>Go to now</button>
+      <button onClick={() => schedra.scrollToTime(Date.now())}>
+        Go to now
+      </button>
 
-      <button onClick={() => karst.scrollToItem("item-42")}>
+      <button onClick={() => schedra.scrollToItem("item-42")}>
         Find item 42
       </button>
 
-      <KarstViewport
-        karst={karst}
+      <SchedraViewport
+        schedra={schedra}
         labelWidth={280}
         stickyHeader
         stickyRowLabels
@@ -76,22 +78,22 @@ The time header and row labels remain visible by default while the timeline
 scrolls:
 
 ```tsx
-<KarstViewport karst={karst} stickyHeader={true} stickyRowLabels={true} />
+<SchedraViewport schedra={schedra} stickyHeader={true} stickyRowLabels={true} />
 ```
 
 Set either prop to `false` when the consumer wants that layer to move with the
 timeline. `stickyHeader` controls the full time header, including the row
 corner. `stickyRowLabels` independently controls the left row-label column.
-Both props are also available on `KarstTimeline`.
+Both props are also available on `SchedraTimeline`.
 
 ### Vertical canvas overscan
 
-Karst paints extra canvas rows above and below the visible viewport by default.
+Schedra paints extra canvas rows above and below the visible viewport by default.
 This prevents an unpainted strip from appearing between the browser scroll and
 the next canvas frame.
 
 ```tsx
-<KarstViewport karst={karst} verticalCanvasOverscan={4} />
+<SchedraViewport schedra={schedra} verticalCanvasOverscan={4} />
 ```
 
 The value is a row count and defaults to `3`. Set it to `0` to use a
@@ -105,13 +107,13 @@ last row, so it never adds empty bitmap space outside the timeline content.
 
 ### Custom header content and styles
 
-Karst keeps the existing 32px light header when no header options are passed.
+Schedra keeps the existing 32px light header when no header options are passed.
 Use the header props when the timeline needs to match an application-specific
 design:
 
 ```tsx
-<KarstViewport
-  karst={karst}
+<SchedraViewport
+  schedra={schedra}
   headerHeight={44}
   headerStyle={{ background: "#211f1a" }}
   cornerHeaderStyle={{ color: "white", background: "#211f1a" }}
@@ -134,7 +136,7 @@ design:
 />
 ```
 
-`renderTimeHeader` replaces only the time-header content. Karst still owns the
+`renderTimeHeader` replaces only the time-header content. Schedra still owns the
 sticky container and supplies the visible ticks:
 
 | Render argument | Purpose                                       |
@@ -154,10 +156,10 @@ props are merged over the default styles.
 
 ## Controlled state
 
-Karst never owns your durable application state.
+Schedra never owns your durable application state.
 
 ```tsx
-const [view, setView] = useState<KarstView>("hour");
+const [view, setView] = useState<SchedraView>("hour");
 const [zoom, setZoom] = useState(1);
 const [selection, setSelection] = useState<SelectionChange>({
   selectedItemIds: [],
@@ -165,10 +167,10 @@ const [selection, setSelection] = useState<SelectionChange>({
 });
 ```
 
-Pass those values to Karst:
+Pass those values to Schedra:
 
 ```tsx
-const karst = useKarst({
+const schedra = useSchedra({
   rows,
   range,
   view,
@@ -184,11 +186,11 @@ an item inside the multi-selection.
 
 ### Box selection
 
-Enable desktop-style box selection on `KarstViewport`:
+Enable desktop-style box selection on `SchedraViewport`:
 
 ```tsx
-<KarstViewport
-  karst={karst}
+<SchedraViewport
+  schedra={schedra}
   interactionMode={boxSelectionEnabled ? "box-select" : "default"}
   boxSelection={{
     match: "intersect",
@@ -197,7 +199,7 @@ Enable desktop-style box selection on `KarstViewport`:
 />
 ```
 
-Start dragging from empty canvas space. Karst draws the box and proposes the
+Start dragging from empty canvas space. Schedra draws the box and proposes the
 new controlled selection through `onSelectionChange`. Hold `Shift`, `Ctrl`, or
 `Cmd` to add items to the current selection. Press `Escape` to cancel an active
 drag.
@@ -208,14 +210,14 @@ Use `match: "intersect"` to select every item touched by the box. Use
 `activeItemId` identifies the primary item. It is normally the item whose
 popover or details panel is open.
 
-When `zoom` changes, Karst preserves the timestamp under the most recent
+When `zoom` changes, Schedra preserves the timestamp under the most recent
 timeline pointer position. If the pointer has not entered the timeline, the
 viewport center is preserved instead. The browser may clamp this adjustment at
 the configured range boundaries.
 
 ## Update data
 
-Update your own row state and pass the new immutable value to Karst.
+Update your own row state and pass the new immutable value to Schedra.
 
 ```tsx
 setRows((currentRows) =>
@@ -237,12 +239,12 @@ Do not mutate existing arrays:
 rows[0].items.push(newItem);
 ```
 
-Immutable row references allow Karst to reuse cached work.
+Immutable row references allow Schedra to reuse cached work.
 
 ## Observe the viewport
 
 ```tsx
-const karst = useKarst({
+const schedra = useSchedra({
   // Other options...
   onVisibleRangeChange(visible) {
     console.log("Visible time", visible.start, visible.end);
@@ -261,7 +263,7 @@ This callback is optional. It is useful for:
 ## Hover events
 
 ```tsx
-const karst = useKarst({
+const schedra = useSchedra({
   // Other options...
   onHoverChange(itemId) {
     setHoveredItemId(itemId);
@@ -274,9 +276,9 @@ Hover does not change controlled selection.
 ## Programmatic navigation
 
 ```ts
-karst.scrollToTime(timestamp);
-karst.scrollToRow("row-42");
-karst.scrollToItem("item-99");
+schedra.scrollToTime(timestamp);
+schedra.scrollToRow("row-42");
+schedra.scrollToItem("item-99");
 ```
 
 These methods are no-ops when their target does not exist.
@@ -287,8 +289,8 @@ Callbacks are useful for notifications. The stable controller methods are
 useful when another part of the application needs the current snapshot:
 
 ```ts
-const conflicts = karst.getConflicts();
-const issues = karst.getDataIssues();
+const conflicts = schedra.getConflicts();
+const issues = schedra.getDataIssues();
 ```
 
 Both methods return the latest result after immutable `rows` or
@@ -307,7 +309,7 @@ default.
 
 | Option                 | Type                        | Required | Purpose                                   |
 | ---------------------- | --------------------------- | -------- | ----------------------------------------- |
-| `rows`                 | `readonly KarstRow[]`       | Yes      | Complete immutable row snapshot.          |
+| `rows`                 | `readonly SchedraRow[]`     | Yes      | Complete immutable row snapshot.          |
 | `range`                | `{ start; end }`            | Yes      | Loaded timeline boundary in milliseconds. |
 | `view`                 | `"hour" \| "day" \| "week"` | Yes      | Current time scale.                       |
 | `zoom`                 | `number`                    | Yes      | Current scale multiplier.                 |
@@ -319,14 +321,14 @@ default.
 | `timeZone`             | `string`                    | No       | Calendar and label timezone; UTC default. |
 | `weekStartsOn`         | `number`                    | No       | First weekday; Monday is `1`.             |
 | `conflictVisibility`   | `"show" \| "hide-later"`    | No       | Conflict rendering policy.                |
-| `theme`                | `Partial<KarstTheme>`       | No       | Default renderer theme.                   |
+| `theme`                | `Partial<SchedraTheme>`     | No       | Default renderer theme.                   |
 | `renderItem`           | `RenderItem`                | No       | Custom canvas item renderer.              |
 | `onHoverChange`        | callback                    | No       | Reports hovered item ID.                  |
 | `onVisibleRangeChange` | callback                    | No       | Reports visible time and rows.            |
 | `onDataIssues`         | callback                    | No       | Reports invalid data.                     |
 | `onConflictsChange`    | callback                    | No       | Reports overlaps.                         |
 
-`KarstViewport` also accepts `interactionMode`, `boxSelection`, `labelWidth`,
+`SchedraViewport` also accepts `interactionMode`, `boxSelection`, `labelWidth`,
 `verticalCanvasOverscan`, the header options above, `stickyHeader`,
-`stickyRowLabels`, and `renderRowLabel`. `KarstTimeline` forwards the same
+`stickyRowLabels`, and `renderRowLabel`. `SchedraTimeline` forwards the same
 viewport options.

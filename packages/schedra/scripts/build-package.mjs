@@ -15,12 +15,12 @@ const modules = [
   {
     source: join(workspaceDirectory, "packages/react/dist"),
     target: join(outputDirectory, "react"),
-    replacements: [["@karst/core", "../core/index.js"]],
+    replacements: [["@schedra/core", "../core/index.js"]],
   },
   {
     source: join(workspaceDirectory, "packages/react-popover/dist"),
     target: join(outputDirectory, "react-popover"),
-    replacements: [["@karst/react", "../react/index.js"]],
+    replacements: [["@schedra/react", "../react/index.js"]],
   },
 ];
 

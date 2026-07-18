@@ -1,7 +1,7 @@
-import type { KarstController } from "@karst/react";
+import type { SchedraController } from "@schedra/react";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { useKarstPopover } from "./use-karst-popover.js";
+import { useSchedraPopover } from "./use-schedra-popover.js";
 
 function createController(scroller: HTMLDivElement | null = null) {
   const anchors = new Map<string, DOMRect>();
@@ -15,7 +15,7 @@ function createController(scroller: HTMLDivElement | null = null) {
         listeners.delete(listener);
       };
     },
-  } as unknown as KarstController;
+  } as unknown as SchedraController;
 
   return {
     controller,
@@ -27,13 +27,13 @@ function createController(scroller: HTMLDivElement | null = null) {
   };
 }
 
-describe("useKarstPopover", () => {
+describe("useSchedraPopover", () => {
   it("stays open but hidden until the first anchor is ready", async () => {
     const source = createController();
     const onOpenChange = vi.fn();
     const { result } = renderHook(() =>
-      useKarstPopover({
-        karst: source.controller,
+      useSchedraPopover({
+        schedra: source.controller,
         activeItemId: "item-1",
         open: true,
         onOpenChange,
@@ -60,8 +60,8 @@ describe("useKarstPopover", () => {
     const source = createController();
     const onOpenChange = vi.fn();
     renderHook(() =>
-      useKarstPopover({
-        karst: source.controller,
+      useSchedraPopover({
+        schedra: source.controller,
         activeItemId: null,
         open: true,
         onOpenChange,
@@ -76,8 +76,8 @@ describe("useKarstPopover", () => {
     const onOpenChange = vi.fn();
     source.setAnchor("item-1", new DOMRect(40, 50, 80, 24));
     const { result } = renderHook(() =>
-      useKarstPopover({
-        karst: source.controller,
+      useSchedraPopover({
+        schedra: source.controller,
         activeItemId: "item-1",
         open: true,
         onOpenChange,
@@ -99,8 +99,8 @@ describe("useKarstPopover", () => {
     const source = createController();
     source.setAnchor("item-1", new DOMRect(20, 30, 40, 20));
     const { result } = renderHook(() =>
-      useKarstPopover({
-        karst: source.controller,
+      useSchedraPopover({
+        schedra: source.controller,
         activeItemId: "item-1",
         open: true,
         onOpenChange: vi.fn(),
@@ -127,8 +127,8 @@ describe("useKarstPopover", () => {
     const onOpenChange = vi.fn();
     source.setAnchor("item-1", new DOMRect(20, 30, 40, 20));
     renderHook(() =>
-      useKarstPopover({
-        karst: source.controller,
+      useSchedraPopover({
+        schedra: source.controller,
         activeItemId: "item-1",
         open: true,
         onOpenChange,

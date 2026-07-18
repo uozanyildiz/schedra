@@ -1,5 +1,5 @@
 {
-  "name": "karst-workspace",
+  "name": "schedra-workspace",
   "private": true,
   "type": "module",
   "license": "MIT",
@@ -7,13 +7,13 @@
   "scripts": {
     "build": "pnpm -r build",
     "test": "pnpm -r test",
-    "typecheck": "pnpm -r typecheck",
+    "typecheck": "pnpm --filter @schedra/core build && pnpm --filter @schedra/react build && pnpm --filter @schedra/react-popover build && pnpm -r typecheck",
     "lint": "eslint .",
-    "dev": "pnpm --filter @karst/demo dev",
+    "dev": "pnpm --filter @schedra/demo dev",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "release:check": "pnpm typecheck && pnpm test && pnpm build && pnpm lint && pnpm format:check && pnpm --filter karst publish --dry-run --access public --no-git-checks",
-    "release:publish": "pnpm --filter karst publish --access public"
+    "release:check": "pnpm typecheck && pnpm test && pnpm build && pnpm lint && pnpm format:check && pnpm --filter schedra publish --dry-run --access public --no-git-checks",
+    "release:publish": "pnpm --filter schedra publish --access public"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

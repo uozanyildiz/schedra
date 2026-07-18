@@ -1,11 +1,11 @@
 import {
   calculateTimelineTicks,
-  createKarstEngine,
+  createSchedraEngine,
   createTimeScale,
   getVisibleRowRange,
   type CanvasLayers,
-  type KarstEngine,
-} from "@karst/core";
+  type SchedraEngine,
+} from "@schedra/core";
 import {
   useCallback,
   useEffect,
@@ -17,13 +17,13 @@ import {
   type RefObject,
 } from "react";
 import type {
-  KarstController,
-  KarstViewportProps,
-  KarstVisibleRange,
+  SchedraController,
+  SchedraViewportProps,
+  SchedraVisibleRange,
 } from "./types.js";
-import { pixelsPerMillisecond } from "./use-karst.js";
+import { pixelsPerMillisecond } from "./use-schedra.js";
 
-type InternalController = KarstController & {
+type InternalController = SchedraController & {
   _anchors: RefObject<Map<string, DOMRect>>;
   _notifyAnchors(): void;
 };
@@ -82,8 +82,8 @@ export function calculateVerticalCanvasBuffer({
   };
 }
 
-export function KarstViewport<TRowData = unknown, TItemData = unknown>({
-  karst,
+export function SchedraViewport<TRowData = unknown, TItemData = unknown>({
+  schedra,
   className,
   style,
   labelWidth = 180,
@@ -99,12 +99,12 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
   renderCornerHeader,
   renderTimeHeader,
   renderRowLabel,
-}: KarstViewportProps<TRowData, TItemData>) {
+}: SchedraViewportProps<TRowData, TItemData>) {
   const gridRef = useRef<HTMLCanvasElement>(null);
   const itemsRef = useRef<HTMLCanvasElement>(null);
   const interactionRef = useRef<HTMLCanvasElement>(null);
   const gridOverlayRef = useRef<HTMLDivElement>(null);
-  const engineRef = useRef<KarstEngine<TRowData, TItemData> | null>(null);
+  const engineRef = useRef<SchedraEngine<TRowData, TItemData> | null>(null);
   const updateAnchorRef = useRef<() => void>(() => {});
   const frameRef = useRef<number | null>(null);
   const hoveredRef = useRef<string | null>(null);
@@ -117,18 +117,18 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
     active: boolean;
   } | null>(null);
   const reportingRef = useRef({
-    onConflictsChange: karst.options.onConflictsChange,
-    onDataIssues: karst.options.onDataIssues,
+    onConflictsChange: schedra.options.onConflictsChange,
+    onDataIssues: schedra.options.onDataIssues,
   });
   reportingRef.current = {
-    onConflictsChange: karst.options.onConflictsChange,
-    onDataIssues: karst.options.onDataIssues,
+    onConflictsChange: schedra.options.onConflictsChange,
+    onDataIssues: schedra.options.onDataIssues,
   };
   const lastPointerXRef = useRef<number | null>(null);
   const previousZoomRef = useRef({
-    zoom: karst.options.zoom,
-    view: karst.options.view,
-    origin: karst.options.range.start,
+    zoom: schedra.options.zoom,
+    view: schedra.options.view,
+    origin: schedra.options.range.start,
   });
   const firstVisibleRowRef = useRef<string | null>(null);
   const visibleTimeRef = useRef({ start: 0, end: 0 });
@@ -139,15 +139,15 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
     height: 1,
   });
   const [canvasBufferBefore, setCanvasBufferBefore] = useState(0);
-  const scrollRef = karst.scrollRef;
+  const scrollRef = schedra.scrollRef;
   const resolvedHeaderHeight = Math.max(1, headerHeight);
 
   /* eslint-disable react-hooks/exhaustive-deps -- The controller exposes current
      options through a stable getter. These fields intentionally recreate the
      engine when construction-only configuration changes. */
   const engine = useMemo(() => {
-    const options = karst.options;
-    return createKarstEngine<TRowData, TItemData>({
+    const options = schedra.options;
+    return createSchedraEngine<TRowData, TItemData>({
       rows: options.rows,
       view: options.view,
       origin: options.range.start,
@@ -172,14 +172,14 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
         : {
             renderItem: (
               args: Parameters<NonNullable<typeof options.renderItem>>[0],
-            ) => karst.options.renderItem?.(args),
+            ) => schedra.options.renderItem?.(args),
           }),
       ...(options.renderItems === undefined
         ? {}
         : {
             renderItems: (
               args: Parameters<NonNullable<typeof options.renderItems>>[0],
-            ) => karst.options.renderItems?.(args),
+            ) => schedra.options.renderItems?.(args),
           }),
       ...(options.resolveItemLayouts === undefined
         ? {}
@@ -188,7 +188,7 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
               args: Parameters<
                 NonNullable<typeof options.resolveItemLayouts>
               >[0],
-            ) => karst.options.resolveItemLayouts?.(args) ?? args.layouts,
+            ) => schedra.options.resolveItemLayouts?.(args) ?? args.layouts,
           }),
       ...(options.layoutOverflow === undefined
         ? {}
@@ -199,49 +199,49 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
       onItemLayoutsChange: () => updateAnchorRef.current(),
     });
   }, [
-    karst,
-    karst.options.conflictVisibility,
-    karst.options.overscan,
-    Boolean(karst.options.renderItem),
-    Boolean(karst.options.renderItems),
-    Boolean(karst.options.resolveItemLayouts),
-    karst.options.layoutOverflow,
-    karst.options.rowHeight,
-    karst.options.theme,
-    karst.options.timeZone,
-    karst.options.weekStartsOn,
+    schedra,
+    schedra.options.conflictVisibility,
+    schedra.options.overscan,
+    Boolean(schedra.options.renderItem),
+    Boolean(schedra.options.renderItems),
+    Boolean(schedra.options.resolveItemLayouts),
+    schedra.options.layoutOverflow,
+    schedra.options.rowHeight,
+    schedra.options.theme,
+    schedra.options.timeZone,
+    schedra.options.weekStartsOn,
   ]);
   /* eslint-enable react-hooks/exhaustive-deps */
   engineRef.current = engine;
 
   useEffect(() => {
-    engine.setRows(karst.options.rows);
+    engine.setRows(schedra.options.rows);
     reportingRef.current.onConflictsChange?.(engine.getConflicts().conflicts);
     reportingRef.current.onDataIssues?.(engine.getDataIssues());
-  }, [engine, karst.options.rows]);
+  }, [engine, schedra.options.rows]);
   useEffect(() => {
     engine.setSelection({
-      selectedItemIds: karst.options.selectedItemIds,
-      activeItemId: karst.options.activeItemId,
+      selectedItemIds: schedra.options.selectedItemIds,
+      activeItemId: schedra.options.activeItemId,
     });
-  }, [engine, karst.options.activeItemId, karst.options.selectedItemIds]);
+  }, [engine, schedra.options.activeItemId, schedra.options.selectedItemIds]);
   useEffect(() => {
     engine.setTimeScale(
-      karst.options.view,
-      karst.options.zoom,
-      karst.options.range.start,
+      schedra.options.view,
+      schedra.options.zoom,
+      schedra.options.range.start,
     );
   }, [
     engine,
-    karst.options.range.start,
-    karst.options.view,
-    karst.options.zoom,
+    schedra.options.range.start,
+    schedra.options.view,
+    schedra.options.zoom,
   ]);
 
   const updateAnchor = useCallback(() => {
-    const options = karst.options;
+    const options = schedra.options;
     const activeId = options.activeItemId;
-    const controller = karst as InternalController;
+    const controller = schedra as InternalController;
     const scroller = scrollRef.current;
     const canvas = interactionRef.current;
     if (!activeId || !scroller || !canvas) {
@@ -283,12 +283,12 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
       ],
     ]);
     controller._notifyAnchors();
-  }, [engine, karst, scrollRef]);
+  }, [engine, schedra, scrollRef]);
   updateAnchorRef.current = updateAnchor;
 
   useLayoutEffect(() => {
     updateAnchor();
-  }, [karst.options.activeItemId, updateAnchor]);
+  }, [schedra.options.activeItemId, updateAnchor]);
 
   const pinViewportLayers = useCallback(() => {
     const scroller = scrollRef.current;
@@ -311,7 +311,7 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
     const items = itemsRef.current;
     const interaction = interactionRef.current;
     if (!scroller || !grid || !items || !interaction) return;
-    const options = karst.options;
+    const options = schedra.options;
     const width = Math.max(1, scroller.clientWidth - labelWidth);
     const height = Math.max(1, scroller.clientHeight - resolvedHeaderHeight);
     const timelineScrollLeft = scroller.scrollLeft;
@@ -374,11 +374,11 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
       ...timeRange,
       rowStartIndex: range.startIndex,
       rowEndIndex: range.endIndex,
-    } satisfies KarstVisibleRange);
+    } satisfies SchedraVisibleRange);
     updateAnchor();
   }, [
     engine,
-    karst,
+    schedra,
     labelWidth,
     pinViewportLayers,
     resolvedHeaderHeight,
@@ -392,9 +392,9 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
     frameRef.current = requestAnimationFrame(syncViewport);
   }, [syncViewport]);
 
-  const currentZoom = karst.options.zoom;
-  const currentView = karst.options.view;
-  const currentOrigin = karst.options.range.start;
+  const currentZoom = schedra.options.zoom;
+  const currentView = schedra.options.view;
+  const currentOrigin = schedra.options.range.start;
   useLayoutEffect(() => {
     const previous = previousZoomRef.current;
     const scroller = scrollRef.current;
@@ -467,16 +467,23 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
     const scroller = scrollRef.current;
     const rowId = firstVisibleRowRef.current;
     if (scroller && rowId) {
-      const nextIndex = karst.options.rows.findIndex((row) => row.id === rowId);
+      const nextIndex = schedra.options.rows.findIndex(
+        (row) => row.id === rowId,
+      );
       if (nextIndex >= 0) {
-        const rowHeight = karst.options.rowHeight ?? 36;
+        const rowHeight = schedra.options.rowHeight ?? 36;
         const currentTimelineTop = scroller.scrollTop;
         scroller.scrollTop =
           nextIndex * rowHeight + (currentTimelineTop % rowHeight);
       }
     }
     scheduleSync();
-  }, [karst.options.rowHeight, karst.options.rows, scheduleSync, scrollRef]);
+  }, [
+    schedra.options.rowHeight,
+    schedra.options.rows,
+    scheduleSync,
+    scrollRef,
+  ]);
 
   const findHit = useCallback((event: PointerEvent<HTMLCanvasElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -530,9 +537,15 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
       if (next === hoveredRef.current) return;
       hoveredRef.current = next;
       engine.setHoveredItem(next);
-      karst.options.onHoverChange?.(next);
+      schedra.options.onHoverChange?.(next);
     },
-    [boxSelection?.activationDistance, engine, findHit, karst, pointerPosition],
+    [
+      boxSelection?.activationDistance,
+      engine,
+      findHit,
+      schedra,
+      pointerPosition,
+    ],
   );
 
   const onPointerDown = useCallback(
@@ -546,37 +559,37 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
           startX: point.x,
           startY: point.y,
           additive: event.shiftKey || event.ctrlKey || event.metaKey,
-          initialIds: [...karst.options.selectedItemIds],
+          initialIds: [...schedra.options.selectedItemIds],
           active: false,
         };
         return;
       }
       if (!itemId) {
-        karst.options.onSelectionChange({
+        schedra.options.onSelectionChange({
           selectedItemIds: [],
           activeItemId: null,
         });
         return;
       }
       const additive = event.shiftKey || event.ctrlKey || event.metaKey;
-      if (!additive && karst.options.activeItemId === itemId) {
-        karst.options.onSelectionChange({
-          selectedItemIds: [...karst.options.selectedItemIds],
+      if (!additive && schedra.options.activeItemId === itemId) {
+        schedra.options.onSelectionChange({
+          selectedItemIds: [...schedra.options.selectedItemIds],
           activeItemId: null,
         });
         return;
       }
       const selected = new Set(
-        additive ? karst.options.selectedItemIds : ([] as string[]),
+        additive ? schedra.options.selectedItemIds : ([] as string[]),
       );
       if (additive && selected.has(itemId)) selected.delete(itemId);
       else selected.add(itemId);
-      karst.options.onSelectionChange({
+      schedra.options.onSelectionChange({
         selectedItemIds: [...selected],
         activeItemId: selected.has(itemId) ? itemId : null,
       });
     },
-    [findHit, interactionMode, karst, pointerPosition],
+    [findHit, interactionMode, schedra, pointerPosition],
   );
 
   const finishBoxSelection = useCallback(
@@ -590,7 +603,7 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
       if (!drag.active) {
         engine.setSelectionBox(null);
         if (!drag.additive) {
-          karst.options.onSelectionChange({
+          schedra.options.onSelectionChange({
             selectedItemIds: [],
             activeItemId: null,
           });
@@ -606,12 +619,12 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
       const selected = new Set(drag.additive ? drag.initialIds : []);
       for (const match of matches) selected.add(match.item.id);
       engine.setSelectionBox(null);
-      karst.options.onSelectionChange({
+      schedra.options.onSelectionChange({
         selectedItemIds: [...selected],
         activeItemId: null,
       });
     },
-    [boxSelection?.match, engine, karst, pointerPosition],
+    [boxSelection?.match, engine, schedra, pointerPosition],
   );
 
   const cancelBoxSelection = useCallback(() => {
@@ -628,31 +641,31 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [cancelBoxSelection, interactionMode]);
 
-  const rowHeight = karst.options.rowHeight ?? 36;
+  const rowHeight = schedra.options.rowHeight ?? 36;
   const timelineWidth = Math.max(
     1,
-    (karst.options.range.end - karst.options.range.start) *
-      pixelsPerMillisecond(karst.options.view, karst.options.zoom),
+    (schedra.options.range.end - schedra.options.range.start) *
+      pixelsPerMillisecond(schedra.options.view, schedra.options.zoom),
   );
   const timeScale = createTimeScale({
-    view: karst.options.view,
-    origin: karst.options.range.start,
-    zoom: karst.options.zoom,
+    view: schedra.options.view,
+    origin: schedra.options.range.start,
+    zoom: schedra.options.zoom,
   });
   const ticks = calculateTimelineTicks({
     range: visibleTime,
-    view: karst.options.view,
-    timeZone: karst.options.timeZone ?? "UTC",
-    weekStartsOn: karst.options.weekStartsOn ?? 1,
+    view: schedra.options.view,
+    timeZone: schedra.options.timeZone ?? "UTC",
+    weekStartsOn: schedra.options.weekStartsOn ?? 1,
   });
   const tickLeft = (timestamp: number) =>
     timeScale.timestampToX(timestamp) -
     timeScale.timestampToX(visibleTime.start);
   const formatter = new Intl.DateTimeFormat(undefined, {
-    timeZone: karst.options.timeZone ?? "UTC",
-    ...(karst.options.view === "hour"
+    timeZone: schedra.options.timeZone ?? "UTC",
+    ...(schedra.options.view === "hour"
       ? { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "short" }
-      : karst.options.view === "day"
+      : schedra.options.view === "day"
         ? { day: "2-digit", month: "short" }
         : { day: "2-digit", month: "short", year: "numeric" }),
   });
@@ -667,12 +680,13 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
         style={{
           position: "relative",
           width: labelWidth + timelineWidth,
-          height: resolvedHeaderHeight + karst.options.rows.length * rowHeight,
+          height:
+            resolvedHeaderHeight + schedra.options.rows.length * rowHeight,
           minWidth: "100%",
         }}
       >
         <div
-          data-karst-header=""
+          data-schedra-header=""
           style={{
             position: stickyHeader ? "sticky" : "absolute",
             zIndex: 6,
@@ -687,7 +701,7 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
           }}
         >
           <div
-            data-karst-corner-header=""
+            data-schedra-corner-header=""
             style={{
               position: "absolute",
               left: 0,
@@ -709,7 +723,7 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
             }) ?? "Rows"}
           </div>
           <div
-            data-karst-time-header=""
+            data-schedra-time-header=""
             style={{
               position: "absolute",
               left: labelWidth,
@@ -728,8 +742,8 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
               visibleRange: visibleTime,
               width: viewport.width,
               height: resolvedHeaderHeight,
-              view: karst.options.view,
-              timeZone: karst.options.timeZone ?? "UTC",
+              view: schedra.options.view,
+              timeZone: schedra.options.timeZone ?? "UTC",
               formatTick: (timestamp) => formatter.format(timestamp),
               getTickOffset: tickLeft,
             }) ??
@@ -775,7 +789,7 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
             />
           ))}
         </div>
-        {karst.options.rows
+        {schedra.options.rows
           .slice(visibleRows.start, visibleRows.end)
           .map((row, offset) => {
             const index = visibleRows.start + offset;
@@ -792,7 +806,7 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
                 }}
               >
                 <div
-                  data-karst-row-label=""
+                  data-schedra-row-label=""
                   style={{
                     position: stickyRowLabels ? "sticky" : "absolute",
                     zIndex: 4,
@@ -821,7 +835,7 @@ export function KarstViewport<TRowData = unknown, TItemData = unknown>({
                 ? () => {
                     hoveredRef.current = null;
                     engine.setHoveredItem(null);
-                    karst.options.onHoverChange?.(null);
+                    schedra.options.onHoverChange?.(null);
                   }
                 : undefined
             }

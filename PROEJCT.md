@@ -1,32 +1,32 @@
-# Karst project definition
+# Schedra project definition
 
 ## Summary
 
-Karst is a fast, headless Gantt timeline library for React. It uses layered
+Schedra is a fast, headless Gantt timeline library for React. It uses layered
 canvas rendering and fixed-height row virtualization to display large schedules.
 The initial target is 1,000–5,000 rows and up to 100,000 items in memory.
 
-The first consumer is the included React demo. Karst is being built for a small
+The first consumer is the included React demo. Schedra is being built for a small
 real project first, but its boundaries and public APIs should be reusable and
 public-package quality.
 
 ## Packages
 
 ```text
-karst/
+schedra/
 ├── packages/
-│   ├── core/             @karst/core
-│   ├── react/            @karst/react
-│   └── react-popover/    @karst/react-popover
+│   ├── core/             @schedra/core
+│   ├── react/            @schedra/react
+│   └── react-popover/    @schedra/react-popover
 ├── apps/
-│   └── demo/             @karst/demo
+│   └── demo/             @schedra/demo
 ├── benchmarks/
 ├── docs/
 ├── PROEJCT.md
 └── README.md
 ```
 
-### `@karst/core`
+### `@schedra/core`
 
 Framework-independent TypeScript. It must not import React or own visual UI.
 
@@ -42,15 +42,15 @@ Responsibilities:
 - Expose item anchor rectangles for overlays.
 - Propose controlled selection changes.
 
-### `@karst/react`
+### `@schedra/react`
 
 React 18 and React 19 adapter.
 
 Responsibilities:
 
-- `useKarst` hook-first API.
-- `KarstViewport` for custom layouts.
-- `KarstTimeline` as a thin convenience component.
+- `useSchedra` hook-first API.
+- `SchedraViewport` for custom layouts.
+- `SchedraTimeline` as a thin convenience component.
 - Attach and clean up the core engine.
 - Own DOM and canvas refs.
 - Use one scroll owner.
@@ -58,7 +58,7 @@ Responsibilities:
 - Virtualize row-label DOM.
 - Synchronize controlled props and callbacks.
 
-### `@karst/react-popover`
+### `@schedra/react-popover`
 
 Optional Floating UI integration.
 
@@ -69,7 +69,7 @@ Responsibilities:
 - Handle collision, flipping, positioning, and repositioning.
 - Leave all markup, content, and visual styling to the consumer.
 
-### `@karst/demo`
+### `@schedra/demo`
 
 React reference application and performance playground.
 
@@ -86,20 +86,20 @@ It should demonstrate:
 
 ## Data model
 
-The application owns all persistent data. Karst receives immutable snapshots.
+The application owns all persistent data. Schedra receives immutable snapshots.
 
 ```ts
-interface KarstItem<TData = unknown> {
+interface SchedraItem<TData = unknown> {
   id: string;
   start: number;
   end: number;
   data: TData;
 }
 
-interface KarstRow<TRowData = unknown, TItemData = unknown> {
+interface SchedraRow<TRowData = unknown, TItemData = unknown> {
   id: string;
   data: TRowData;
-  items: readonly KarstItem<TItemData>[];
+  items: readonly SchedraItem<TItemData>[];
 }
 ```
 
@@ -109,7 +109,7 @@ Rules:
 - Item IDs are globally unique across the full chart.
 - Times are Unix timestamps in milliseconds.
 - Consumers replace changed arrays and objects instead of mutating them.
-- Karst does not provide add, update, or remove data helpers in version one.
+- Schedra does not provide add, update, or remove data helpers in version one.
 - The consumer can store any business fields inside generic `data`.
 
 ## Controlled state
@@ -135,7 +135,7 @@ The engine owns only transient state:
 The active item is separate from the selected ID list. It is the primary item
 whose popover is shown.
 
-When selected items disappear from new row data, Karst proposes a cleaned
+When selected items disappear from new row data, Schedra proposes a cleaned
 selection through `onSelectionChange`. If the active item disappears, the
 popover closes.
 
@@ -160,7 +160,7 @@ Views:
 - `day`: one major unit per day.
 - `week`: one major unit per week.
 
-Horizontal scrolling continues across day, week, and month boundaries. Karst
+Horizontal scrolling continues across day, week, and month boundaries. Schedra
 does not use an infinite-width canvas. It draws the visible portion of the
 complete in-memory schedule.
 
@@ -169,8 +169,8 @@ Other rules:
 - Display time zone is configurable.
 - Weeks begin on Monday by default.
 - `weekStartsOn` is configurable.
-- Karst uses `Intl.DateTimeFormat`.
-- Karst does not depend on a date library.
+- Schedra uses `Intl.DateTimeFormat`.
+- Schedra does not depend on a date library.
 - Zoom is controlled.
 - Zoom is centered on the timestamp under the pointer.
 - Zoom never changes the selected view automatically.
@@ -231,7 +231,7 @@ Gap calculation is deferred.
 
 Invalid data must not stop the full chart from rendering.
 
-Karst reports structured issues for:
+Schedra reports structured issues for:
 
 - Duplicate row IDs
 - Duplicate item IDs
@@ -248,7 +248,7 @@ Overlaps are conflicts, not invalid-data issues.
 
 ## Popover management
 
-Karst uses one global popover, never one DOM popover per item.
+Schedra uses one global popover, never one DOM popover per item.
 
 The core exposes the active item's viewport rectangle. The optional React
 popover package turns it into a Floating UI virtual anchor.
@@ -273,7 +273,7 @@ conflict state, and multi-selection count using consumer data.
 
 ## Rendering
 
-Karst uses three stacked, viewport-sized canvases:
+Schedra uses three stacked, viewport-sized canvases:
 
 1. Grid layer — time grid, row backgrounds, and major boundaries.
 2. Item layer — bars, milestones, labels, and normal item visuals.
@@ -293,7 +293,7 @@ subscribes to visible range changes.
 
 ## Styling
 
-Karst provides a configurable default renderer and theme.
+Schedra provides a configurable default renderer and theme.
 
 The theme controls:
 
@@ -309,11 +309,11 @@ The theme controls:
 Consumers can replace individual render functions such as item, grid, milestone,
 and conflict drawing.
 
-`@karst/core` ships no Tailwind CSS or application-specific styling.
+`@schedra/core` ships no Tailwind CSS or application-specific styling.
 
 ## Row labels
 
-- Karst supports consumer-rendered DOM row labels.
+- Schedra supports consumer-rendered DOM row labels.
 - Labels are virtualized so only visible labels are mounted.
 - Labels and canvas share one vertical scroll position.
 - All rows use one configurable fixed height in version one.
@@ -404,6 +404,6 @@ Browser screenshot testing is not required initially.
 3. Build the layered core renderer and engine lifecycle.
 4. Build the controlled React adapter.
 5. Build optional Floating UI popover integration.
-6. Convert the demo to React and consume only public Karst APIs.
+6. Convert the demo to React and consume only public Schedra APIs.
 7. Run unit tests, type checks, package builds, and the 100,000-item benchmark.
 8. Review API consistency and remove demo-specific assumptions from packages.

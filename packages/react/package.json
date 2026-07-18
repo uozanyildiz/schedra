@@ -1,19 +1,19 @@
 {
-  "name": "@karst/react",
+  "name": "@schedra/react",
   "private": true,
   "version": "0.1.0",
   "description": "Headless React components and hooks for large canvas-based Gantt timelines.",
   "type": "module",
   "license": "MIT",
   "author": "Uğur Ozan Yıldız",
-  "homepage": "https://github.com/uozanyildiz/karst#readme",
+  "homepage": "https://github.com/uozanyildiz/schedra#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/uozanyildiz/karst.git",
+    "url": "git+https://github.com/uozanyildiz/schedra.git",
     "directory": "packages/react"
   },
   "bugs": {
-    "url": "https://github.com/uozanyildiz/karst/issues"
+    "url": "https://github.com/uozanyildiz/schedra/issues"
   },
   "keywords": [
     "react",
@@ -44,12 +44,12 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "peerDependencies": {
-    "@karst/core": "workspace:^",
+    "@schedra/core": "workspace:^",
     "react": "^18.0.0 || ^19.0.0",
     "react-dom": "^18.0.0 || ^19.0.0"
   },
   "devDependencies": {
-    "@karst/core": "workspace:*",
+    "@schedra/core": "workspace:*",
     "@testing-library/react": "^16.3.0",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",

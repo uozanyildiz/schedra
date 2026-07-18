@@ -1,8 +1,8 @@
 import type {
   ConflictVisibility,
-  KarstView,
+  SchedraView,
   SelectionChange,
-} from "karst/core";
+} from "schedra/core";
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
   colorAt,
@@ -14,14 +14,14 @@ import {
   type WorkItem,
 } from "./data";
 import { Icon } from "./icons";
-import { KarstSurface } from "./karst-surface";
+import { SchedraSurface } from "./schedra-surface";
 
 const RANGE = {
   start: SCHEDULE_START - DAY,
   end: SCHEDULE_START + 2 * DAY,
 };
 
-const VIEW_LABELS: Record<KarstView, string> = {
+const VIEW_LABELS: Record<SchedraView, string> = {
   hour: "Hour",
   day: "Day",
   week: "Week",
@@ -29,7 +29,7 @@ const VIEW_LABELS: Record<KarstView, string> = {
 
 export default function App() {
   const [rows, setRows] = useState(() => makeWorkstreams());
-  const [view, setView] = useState<KarstView>("hour");
+  const [view, setView] = useState<SchedraView>("hour");
   const [zoom, setZoom] = useState(1);
   const [selection, setSelection] = useState<SelectionChange>({
     selectedItemIds: ["ROW-0008-04"],
@@ -129,7 +129,7 @@ export default function App() {
             <Icon name="layers" size={18} />
           </div>
           <div>
-            <span>KARST / PLANNING LAB</span>
+            <span>SCHEDRA / PLANNING LAB</span>
             <strong>Canvas timeline</strong>
           </div>
         </div>
@@ -164,7 +164,7 @@ export default function App() {
 
           <div className="center-controls">
             <div className="segmented">
-              {(Object.keys(VIEW_LABELS) as KarstView[]).map((option) => (
+              {(Object.keys(VIEW_LABELS) as SchedraView[]).map((option) => (
                 <button
                   type="button"
                   className={view === option ? "active" : ""}
@@ -249,7 +249,7 @@ export default function App() {
           </div>
         </div>
 
-        <KarstSurface
+        <SchedraSurface
           rows={rows}
           range={RANGE}
           view={view}

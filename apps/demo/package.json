@@ -1,5 +1,5 @@
 {
-  "name": "@karst/demo",
+  "name": "@schedra/demo",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -11,7 +11,7 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "karst": "workspace:*",
+    "schedra": "workspace:*",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },

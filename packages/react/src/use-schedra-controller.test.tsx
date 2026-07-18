@@ -1,7 +1,7 @@
-import type { KarstRow } from "@karst/core";
+import type { SchedraRow } from "@schedra/core";
 import { renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { useKarst } from "./use-karst.js";
+import { useSchedra } from "./use-schedra.js";
 
 const baseOptions = {
   range: { start: 0, end: 100 },
@@ -12,9 +12,9 @@ const baseOptions = {
   onSelectionChange: vi.fn(),
 };
 
-describe("useKarst inspection", () => {
+describe("useSchedra inspection", () => {
   it("exposes current conflicts and data issues directly", () => {
-    const rows: KarstRow[] = [
+    const rows: SchedraRow[] = [
       {
         id: "row-1",
         data: null,
@@ -25,7 +25,7 @@ describe("useKarst inspection", () => {
         ],
       },
     ];
-    const { result } = renderHook(() => useKarst({ ...baseOptions, rows }));
+    const { result } = renderHook(() => useSchedra({ ...baseOptions, rows }));
 
     expect(result.current.getConflicts()).toEqual([
       expect.objectContaining({
@@ -43,7 +43,7 @@ describe("useKarst inspection", () => {
   });
 
   it("keeps controller methods stable while returning the latest inspection", () => {
-    const initialRows: KarstRow[] = [
+    const initialRows: SchedraRow[] = [
       {
         id: "row-1",
         data: null,
@@ -54,8 +54,8 @@ describe("useKarst inspection", () => {
       },
     ];
     const { result, rerender } = renderHook(
-      ({ rows }: { rows: readonly KarstRow[] }) =>
-        useKarst({ ...baseOptions, rows }),
+      ({ rows }: { rows: readonly SchedraRow[] }) =>
+        useSchedra({ ...baseOptions, rows }),
       { initialProps: { rows: initialRows } },
     );
     const controller = result.current;

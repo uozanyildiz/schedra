@@ -1,9 +1,9 @@
-import { KarstViewport } from "./karst-viewport.js";
-import type { KarstTimelineProps } from "./types.js";
-import { useKarst } from "./use-karst.js";
+import { SchedraViewport } from "./schedra-viewport.js";
+import type { SchedraTimelineProps } from "./types.js";
+import { useSchedra } from "./use-schedra.js";
 
-export function KarstTimeline<TRowData = unknown, TItemData = unknown>(
-  props: KarstTimelineProps<TRowData, TItemData>,
+export function SchedraTimeline<TRowData = unknown, TItemData = unknown>(
+  props: SchedraTimelineProps<TRowData, TItemData>,
 ) {
   const {
     className,
@@ -23,10 +23,10 @@ export function KarstTimeline<TRowData = unknown, TItemData = unknown>(
     renderRowLabel,
     ...options
   } = props;
-  const karst = useKarst(options);
+  const schedra = useSchedra(options);
   return (
-    <KarstViewport
-      karst={karst}
+    <SchedraViewport
+      schedra={schedra}
       {...(className === undefined ? {} : { className })}
       {...(style === undefined ? {} : { style })}
       {...(labelWidth === undefined ? {} : { labelWidth })}

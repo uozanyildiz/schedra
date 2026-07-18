@@ -1,6 +1,6 @@
-# @karst/react
+# @schedra/react
 
 Headless React components and hooks for large canvas-based Gantt timelines.
 
-See the [Karst repository](https://github.com/uozanyildiz/karst) for
+See the [Schedra repository](https://github.com/uozanyildiz/schedra) for
 documentation and examples.

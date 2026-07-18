@@ -1,19 +1,19 @@
 import type {
   HitRegion,
   ItemRect,
-  KarstItem,
-  KarstRow,
+  SchedraItem,
+  SchedraRow,
   TimeRange,
 } from "./types.js";
 
 export class ItemIndex<TData = unknown> {
   readonly itemsById = new Map<
     string,
-    { item: KarstItem<TData>; rowId: string }
+    { item: SchedraItem<TData>; rowId: string }
   >();
-  readonly itemsByRow = new Map<string, readonly KarstItem<TData>[]>();
+  readonly itemsByRow = new Map<string, readonly SchedraItem<TData>[]>();
 
-  constructor(rows: readonly KarstRow<unknown, TData>[]) {
+  constructor(rows: readonly SchedraRow<unknown, TData>[]) {
     for (const row of rows) {
       const sorted = [...row.items].sort((a, b) => a.start - b.start);
       this.itemsByRow.set(row.id, sorted);
@@ -22,9 +22,9 @@ export class ItemIndex<TData = unknown> {
     }
   }
 
-  queryRow(rowId: string, range: TimeRange): readonly KarstItem<TData>[] {
+  queryRow(rowId: string, range: TimeRange): readonly SchedraItem<TData>[] {
     const items = this.itemsByRow.get(rowId) ?? [];
-    const result: KarstItem<TData>[] = [];
+    const result: SchedraItem<TData>[] = [];
     for (const item of items) {
       if (item.start >= range.end) break;
       if (

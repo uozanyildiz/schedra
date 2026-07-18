@@ -1,6 +1,6 @@
-# @karst/react-popover
+# @schedra/react-popover
 
-Floating UI popover integration for `@karst/react` timelines.
+Floating UI popover integration for `@schedra/react` timelines.
 
-See the [Karst repository](https://github.com/uozanyildiz/karst) for
+See the [Schedra repository](https://github.com/uozanyildiz/schedra) for
 documentation and examples.

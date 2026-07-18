@@ -1,13 +1,13 @@
-export { KarstTimeline } from "./karst-timeline.js";
-export { KarstViewport } from "./karst-viewport.js";
-export { pixelsPerMillisecond, useKarst } from "./use-karst.js";
+export { SchedraTimeline } from "./schedra-timeline.js";
+export { SchedraViewport } from "./schedra-viewport.js";
+export { pixelsPerMillisecond, useSchedra } from "./use-schedra.js";
 export type {
   ItemAnchorSnapshot,
-  KarstCornerHeaderRenderArgs,
-  KarstController,
-  KarstTimeHeaderRenderArgs,
-  KarstTimelineProps,
-  KarstViewportProps,
-  KarstVisibleRange,
-  UseKarstOptions,
+  SchedraCornerHeaderRenderArgs,
+  SchedraController,
+  SchedraTimeHeaderRenderArgs,
+  SchedraTimelineProps,
+  SchedraViewportProps,
+  SchedraVisibleRange,
+  UseSchedraOptions,
 } from "./types.js";

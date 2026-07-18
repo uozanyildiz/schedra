@@ -1,6 +1,6 @@
 # Conflicts and validation
 
-Karst separates overlap conflicts from invalid data.
+Schedra separates overlap conflicts from invalid data.
 
 - A conflict is valid data that overlaps another item.
 - A data issue is malformed input that cannot be rendered safely.
@@ -34,7 +34,7 @@ Milestones where `start === end` do not create conflicts.
 ## Show every conflict
 
 ```tsx
-const karst = useKarst({
+const schedra = useSchedra({
   // Other options...
   conflictVisibility: "show",
   onConflictsChange(conflicts) {
@@ -48,7 +48,7 @@ All items stay visible. Custom rendering receives `state.conflicted`.
 ## Hide later items
 
 ```tsx
-const karst = useKarst({
+const schedra = useSchedra({
   // Other options...
   conflictVisibility: "hide-later",
   onConflictsChange: setConflicts,
@@ -64,7 +64,7 @@ If two items start at the same time, the one appearing first in the row's
 ## Conflict result
 
 ```ts
-interface KarstConflict {
+interface SchedraConflict {
   rowId: string;
   earlierItemId: string;
   laterItemId: string;
@@ -87,7 +87,7 @@ Example UI:
 
 ## Invalid data
 
-Karst reports:
+Schedra reports:
 
 - Duplicate row IDs
 - Duplicate item IDs
@@ -96,7 +96,7 @@ Karst reports:
 - End timestamps earlier than start
 
 ```tsx
-const karst = useKarst({
+const schedra = useSchedra({
   // Other options...
   onDataIssues(issues) {
     for (const issue of issues) {
@@ -114,16 +114,16 @@ The callbacks report changes. The controller also exposes the current results
 for panels, badges, and commands that need to read them on demand:
 
 ```ts
-const conflicts = karst.getConflicts();
-const issues = karst.getDataIssues();
+const conflicts = schedra.getConflicts();
+const issues = schedra.getDataIssues();
 ```
 
 ## Validate outside React
 
-`karst/core` exports `validateRows`:
+`schedra/core` exports `validateRows`:
 
 ```ts
-import { validateRows } from "karst/core";
+import { validateRows } from "schedra/core";
 
 const result = validateRows(rows);
 
@@ -136,7 +136,7 @@ This is useful before saving or importing schedule data.
 ## Detect conflicts outside React
 
 ```ts
-import { detectConflicts } from "karst/core";
+import { detectConflicts } from "schedra/core";
 
 const result = detectConflicts(rows, "hide-later");
 

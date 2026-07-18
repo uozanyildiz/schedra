@@ -4,7 +4,7 @@ import {
   HitTestIndex,
   ItemIndex,
   cleanSelection,
-  createKarstEngine,
+  createSchedraEngine,
   createTimeScale,
   detectConflicts,
   getVisibleRowRange,
@@ -13,13 +13,13 @@ import {
   visibleTimeRange,
   type CanvasLayers,
   type ItemRect,
-  type KarstRow,
+  type SchedraRow,
 } from "../src/index.js";
 
 const row = (
   id: string,
   items: Array<{ id: string; start: number; end: number }>,
-): KarstRow => ({
+): SchedraRow => ({
   id,
   data: null,
   items: items.map((item) => ({ ...item, data: null })),
@@ -241,7 +241,7 @@ describe("engine", () => {
       renderOrder: number;
     }> = [];
     const layoutsChanged = vi.fn();
-    const engine = createKarstEngine({
+    const engine = createSchedraEngine({
       origin: 0,
       rows: [
         row("a", [
@@ -300,7 +300,7 @@ describe("engine", () => {
 
   it("uses layout overflow to resolve items outside the exact time viewport", () => {
     const rendered = vi.fn();
-    const engine = createKarstEngine({
+    const engine = createSchedraEngine({
       origin: 0,
       rows: [row("a", [{ id: "before", start: -60_000, end: -30_000 }])],
       layoutOverflow: 100,
@@ -327,7 +327,7 @@ describe("engine", () => {
 
   it("can render a row as one batch while preserving item hit regions", () => {
     const renderItems = vi.fn();
-    const engine = createKarstEngine({
+    const engine = createSchedraEngine({
       origin: 0,
       rows: [
         row("a", [
@@ -358,7 +358,7 @@ describe("engine", () => {
     const callbacks: FrameRequestCallback[] = [];
     const issues = vi.fn();
     const conflicts = vi.fn();
-    const engine = createKarstEngine({
+    const engine = createSchedraEngine({
       origin: 0,
       rows: [row("a", [{ id: "bad", start: 2, end: 1 }])],
       onDataIssues: issues,
@@ -394,7 +394,7 @@ describe("engine", () => {
         { id: "later", start: 5, end: 15 },
       ]),
     ];
-    const engine = createKarstEngine({
+    const engine = createSchedraEngine({
       origin: 0,
       rows,
       conflictVisibility: "show",

@@ -1,5 +1,5 @@
 import { HOUR_MS } from "./time-scale.js";
-import type { KarstView, TimeRange } from "./types.js";
+import type { SchedraView, TimeRange } from "./types.js";
 
 export interface ZonedDateParts {
   year: number;
@@ -17,7 +17,7 @@ export interface TimelineTick {
 
 export interface CalculateTicksOptions {
   range: TimeRange;
-  view: KarstView;
+  view: SchedraView;
   timeZone: string;
   /** Sunday is 0, Monday is 1. Defaults to Monday. */
   weekStartsOn?: number;

@@ -1,5 +1,5 @@
 import type {
-  KarstView,
+  SchedraView,
   TimeRange,
   TimeScale,
   TimeScaleOptions,
@@ -9,7 +9,7 @@ export const HOUR_MS = 3_600_000;
 export const DAY_MS = 24 * HOUR_MS;
 export const WEEK_MS = 7 * DAY_MS;
 
-const durationByView: Record<KarstView, number> = {
+const durationByView: Record<SchedraView, number> = {
   hour: HOUR_MS,
   day: DAY_MS,
   week: WEEK_MS,

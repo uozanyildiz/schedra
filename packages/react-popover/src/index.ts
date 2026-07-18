@@ -1,5 +1,5 @@
-export { useKarstPopover } from "./use-karst-popover.js";
+export { useSchedraPopover } from "./use-schedra-popover.js";
 export type {
-  KarstPopover,
-  UseKarstPopoverOptions,
-} from "./use-karst-popover.js";
+  SchedraPopover,
+  UseSchedraPopoverOptions,
+} from "./use-schedra-popover.js";

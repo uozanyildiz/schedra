@@ -1,15 +1,15 @@
 import type {
   ConflictResult,
   ConflictVisibility,
-  KarstConflict,
-  KarstRow,
+  SchedraConflict,
+  SchedraRow,
 } from "./types.js";
 
 export function detectConflicts(
-  rows: readonly KarstRow[],
+  rows: readonly SchedraRow[],
   visibility: ConflictVisibility = "show",
 ): ConflictResult {
-  const conflicts: KarstConflict[] = [];
+  const conflicts: SchedraConflict[] = [];
   const conflictedItemIds = new Set<string>();
   const hiddenItemIds = new Set<string>();
 
@@ -27,7 +27,7 @@ export function detectConflicts(
       while (active.length && active[0]!.item.end <= current.item.start)
         active.shift();
       for (const earlier of active) {
-        const conflict: KarstConflict = {
+        const conflict: SchedraConflict = {
           rowId: row.id,
           earlierItemId: earlier.item.id,
           laterItemId: current.item.id,

@@ -3,13 +3,13 @@ export type {
   DataIssue,
   DataIssueCode,
   ItemRect,
-  KarstConflict,
-  KarstItem,
-  KarstRow,
-  KarstSelection,
-  KarstTheme,
-  KarstView,
-  KarstViewport,
+  SchedraConflict,
+  SchedraItem,
+  SchedraRow,
+  SchedraSelection,
+  SchedraTheme,
+  SchedraView,
+  SchedraViewport,
   RenderItem,
   RenderItemArgs,
   RenderItemState,
@@ -48,9 +48,9 @@ export {
   clearLayer,
 } from "./renderer.js";
 export {
-  createKarstEngine,
-  KarstEngine,
-  type KarstEngineOptions,
+  createSchedraEngine,
+  SchedraEngine,
+  type SchedraEngineOptions,
 } from "./engine.js";
 export {
   addZonedDays,

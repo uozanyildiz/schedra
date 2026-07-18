@@ -1,18 +1,18 @@
-export type KarstView = "hour" | "day" | "week";
+export type SchedraView = "hour" | "day" | "week";
 
 export type ConflictVisibility = "show" | "hide-later";
 
-export interface KarstItem<TData = unknown> {
+export interface SchedraItem<TData = unknown> {
   id: string;
   start: number;
   end: number;
   data: TData;
 }
 
-export interface KarstRow<TRowData = unknown, TItemData = unknown> {
+export interface SchedraRow<TRowData = unknown, TItemData = unknown> {
   id: string;
   data: TRowData;
-  items: readonly KarstItem<TItemData>[];
+  items: readonly SchedraItem<TItemData>[];
 }
 
 export interface TimeRange {
@@ -26,14 +26,14 @@ export interface VisibleRowRange {
   endIndex: number;
 }
 
-export interface KarstViewport {
+export interface SchedraViewport {
   width: number;
   height: number;
   scrollLeft: number;
   scrollTop: number;
 }
 
-export interface KarstSelection {
+export interface SchedraSelection {
   selectedItemIds: readonly string[];
   activeItemId: string | null;
 }
@@ -57,7 +57,7 @@ export interface DataIssue {
   itemId?: string;
 }
 
-export interface KarstConflict {
+export interface SchedraConflict {
   rowId: string;
   earlierItemId: string;
   laterItemId: string;
@@ -73,18 +73,18 @@ export interface ItemRect {
 }
 
 export interface ValidatedData<TRowData = unknown, TItemData = unknown> {
-  rows: KarstRow<TRowData, TItemData>[];
+  rows: SchedraRow<TRowData, TItemData>[];
   issues: DataIssue[];
 }
 
 export interface ConflictResult {
-  conflicts: KarstConflict[];
+  conflicts: SchedraConflict[];
   conflictedItemIds: Set<string>;
   hiddenItemIds: Set<string>;
 }
 
 export interface TimeScaleOptions {
-  view: KarstView;
+  view: SchedraView;
   origin: number;
   zoom?: number;
   hourWidth?: number;
@@ -93,7 +93,7 @@ export interface TimeScaleOptions {
 }
 
 export interface TimeScale {
-  readonly view: KarstView;
+  readonly view: SchedraView;
   readonly origin: number;
   readonly pixelsPerMillisecond: number;
   timestampToX(timestamp: number): number;
@@ -102,7 +102,7 @@ export interface TimeScale {
 }
 
 export interface HitRegion<TData = unknown> {
-  item: KarstItem<TData>;
+  item: SchedraItem<TData>;
   rowId: string;
   visualRect: ItemRect;
   order: number;
@@ -125,7 +125,7 @@ export interface RenderItemState {
   milestone: boolean;
 }
 
-export interface KarstTheme {
+export interface SchedraTheme {
   background: string;
   rowBackground: string;
   alternateRowBackground: string;
@@ -144,12 +144,12 @@ export interface KarstTheme {
 
 export interface RenderItemArgs<TItemData = unknown> {
   context: CanvasRenderingContext2D;
-  item: KarstItem<TItemData>;
+  item: SchedraItem<TItemData>;
   timeRect: Readonly<ItemRect>;
   visualRect: ItemRect;
   renderOrder: number;
   state: RenderItemState;
-  theme: KarstTheme;
+  theme: SchedraTheme;
 }
 
 export type RenderItem<TItemData = unknown> = (
@@ -158,9 +158,9 @@ export type RenderItem<TItemData = unknown> = (
 
 export interface RenderItemsArgs<TRowData = unknown, TItemData = unknown> {
   context: CanvasRenderingContext2D;
-  row: KarstRow<TRowData, TItemData>;
+  row: SchedraRow<TRowData, TItemData>;
   items: readonly Omit<RenderItemArgs<TItemData>, "context" | "theme">[];
-  theme: KarstTheme;
+  theme: SchedraTheme;
 }
 
 export type RenderItems<TRowData = unknown, TItemData = unknown> = (
@@ -168,7 +168,7 @@ export type RenderItems<TRowData = unknown, TItemData = unknown> = (
 ) => void;
 
 export interface ItemLayout<TItemData = unknown> {
-  item: KarstItem<TItemData>;
+  item: SchedraItem<TItemData>;
   timeRect: Readonly<ItemRect>;
   visualRect: ItemRect;
   renderOrder?: number;
@@ -178,7 +178,7 @@ export interface ResolveItemLayoutsArgs<
   TRowData = unknown,
   TItemData = unknown,
 > {
-  row: KarstRow<TRowData, TItemData>;
+  row: SchedraRow<TRowData, TItemData>;
   layouts: readonly ItemLayout<TItemData>[];
 }
 

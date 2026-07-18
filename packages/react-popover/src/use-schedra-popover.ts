@@ -7,11 +7,11 @@ import {
   type Placement,
   type UseFloatingReturn,
 } from "@floating-ui/react";
-import type { KarstController } from "@karst/react";
+import type { SchedraController } from "@schedra/react";
 import { useEffect, useLayoutEffect, useMemo, useReducer, useRef } from "react";
 
-export interface UseKarstPopoverOptions {
-  karst: KarstController<any, any>;
+export interface UseSchedraPopoverOptions {
+  schedra: SchedraController<any, any>;
   activeItemId: string | null;
   open: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -19,7 +19,7 @@ export interface UseKarstPopoverOptions {
   offset?: number;
 }
 
-export interface KarstPopover {
+export interface SchedraPopover {
   open: boolean;
   activeItemId: string | null;
   floatingStyles: UseFloatingReturn["floatingStyles"];
@@ -31,14 +31,14 @@ export interface KarstPopover {
  * Positions one consumer-rendered popover against the active canvas item.
  * No popover DOM is created per item.
  */
-export function useKarstPopover({
-  karst,
+export function useSchedraPopover({
+  schedra,
   activeItemId,
   open,
   onOpenChange,
   placement = "top",
   offset: offsetValue = 8,
-}: UseKarstPopoverOptions): KarstPopover {
+}: UseSchedraPopoverOptions): SchedraPopover {
   const [, forceAnchorUpdate] = useReducer((value) => value + 1, 0);
   const latestState = useRef({ activeItemId, open, onOpenChange });
   latestState.current = { activeItemId, open, onOpenChange };
@@ -54,11 +54,11 @@ export function useKarstPopover({
     () => ({
       getBoundingClientRect: () =>
         activeItemId
-          ? (karst.getItemAnchorRect(activeItemId) ?? new DOMRect())
+          ? (schedra.getItemAnchorRect(activeItemId) ?? new DOMRect())
           : new DOMRect(),
       getClientRects: () => {
         const rect = activeItemId
-          ? (karst.getItemAnchorRect(activeItemId) ?? new DOMRect())
+          ? (schedra.getItemAnchorRect(activeItemId) ?? new DOMRect())
           : new DOMRect();
         return {
           0: rect,
@@ -70,7 +70,7 @@ export function useKarstPopover({
         } as DOMRectList;
       },
     }),
-    [activeItemId, karst],
+    [activeItemId, schedra],
   );
 
   useLayoutEffect(() => {
@@ -79,12 +79,12 @@ export function useKarstPopover({
 
   useEffect(
     () =>
-      karst.subscribeAnchors(() => {
+      schedra.subscribeAnchors(() => {
         const current = latestState.current;
         if (
           current.open &&
           current.activeItemId &&
-          !karst.getItemAnchorRect(current.activeItemId)
+          !schedra.getItemAnchorRect(current.activeItemId)
         ) {
           current.onOpenChange?.(false);
           return;
@@ -92,7 +92,7 @@ export function useKarstPopover({
         forceAnchorUpdate();
         void floating.update();
       }),
-    [floating, karst],
+    [floating, schedra],
   );
 
   useEffect(() => {
@@ -102,12 +102,12 @@ export function useKarstPopover({
   }, [activeItemId, onOpenChange, open]);
 
   useEffect(() => {
-    const scroller = karst.scrollRef.current;
+    const scroller = schedra.scrollRef.current;
     if (!scroller || !open) return;
     const closeOnScroll = () => onOpenChange?.(false);
     scroller.addEventListener("scroll", closeOnScroll, { passive: true });
     return () => scroller.removeEventListener("scroll", closeOnScroll);
-  }, [karst, onOpenChange, open]);
+  }, [schedra, onOpenChange, open]);
 
   return {
     open: open && activeItemId !== null,

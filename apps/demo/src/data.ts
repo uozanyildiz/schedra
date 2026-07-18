@@ -1,4 +1,4 @@
-import type { KarstItem, KarstRow } from "karst/core";
+import type { SchedraItem, SchedraRow } from "schedra/core";
 
 export const ROW_COUNT = 1_000;
 export const ROW_HEIGHT = 42;
@@ -41,8 +41,8 @@ export interface WorkItemData {
   label: string;
 }
 
-export type WorkItem = KarstItem<WorkItemData>;
-export type Workstream = KarstRow<WorkstreamData, WorkItemData>;
+export type WorkItem = SchedraItem<WorkItemData>;
+export type Workstream = SchedraRow<WorkstreamData, WorkItemData>;
 
 export function seeded(index: number, salt = 0) {
   const value = Math.sin(index * 9301 + salt * 49297) * 49297;

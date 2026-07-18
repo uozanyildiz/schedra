@@ -1,13 +1,13 @@
 import { act, render, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { KarstController } from "./types.js";
-import { KarstTimeline } from "./karst-timeline.js";
+import type { SchedraController } from "./types.js";
+import { SchedraTimeline } from "./schedra-timeline.js";
 import {
-  KarstViewport,
+  SchedraViewport,
   calculatePointerCenteredScroll,
   calculateVerticalCanvasBuffer,
-} from "./karst-viewport.js";
-import { useKarst } from "./use-karst.js";
+} from "./schedra-viewport.js";
+import { useSchedra } from "./use-schedra.js";
 
 beforeEach(() => {
   vi.stubGlobal(
@@ -109,27 +109,27 @@ describe("sticky viewport layers", () => {
   };
 
   it("keeps the header and row labels sticky by default", async () => {
-    const { container } = render(<KarstTimeline {...timelineProps} />);
+    const { container } = render(<SchedraTimeline {...timelineProps} />);
 
     const header = container.querySelector(
-      "[data-karst-header]",
+      "[data-schedra-header]",
     ) as HTMLElement;
     expect(header.style.position).toBe("sticky");
     expect(header.style.height).toBe("32px");
     expect(
-      container.querySelector("[data-karst-corner-header]")?.textContent,
+      container.querySelector("[data-schedra-corner-header]")?.textContent,
     ).toBe("Rows");
     await waitFor(() =>
       expect(
-        (container.querySelector("[data-karst-row-label]") as HTMLElement).style
-          .position,
+        (container.querySelector("[data-schedra-row-label]") as HTMLElement)
+          .style.position,
       ).toBe("sticky"),
     );
   });
 
-  it("forwards disabled sticky options through KarstTimeline", async () => {
+  it("forwards disabled sticky options through SchedraTimeline", async () => {
     const { container } = render(
-      <KarstTimeline
+      <SchedraTimeline
         {...timelineProps}
         stickyHeader={false}
         stickyRowLabels={false}
@@ -137,20 +137,20 @@ describe("sticky viewport layers", () => {
     );
 
     expect(
-      (container.querySelector("[data-karst-header]") as HTMLElement).style
+      (container.querySelector("[data-schedra-header]") as HTMLElement).style
         .position,
     ).toBe("absolute");
     await waitFor(() =>
       expect(
-        (container.querySelector("[data-karst-row-label]") as HTMLElement).style
-          .position,
+        (container.querySelector("[data-schedra-row-label]") as HTMLElement)
+          .style.position,
       ).toBe("absolute"),
     );
   });
 
   it("forwards custom header layout, styles, and renderers", () => {
     const { container } = render(
-      <KarstTimeline
+      <SchedraTimeline
         {...timelineProps}
         headerHeight={48}
         headerStyle={{ background: "rgb(1, 2, 3)" }}
@@ -170,13 +170,13 @@ describe("sticky viewport layers", () => {
     );
 
     const header = container.querySelector(
-      "[data-karst-header]",
+      "[data-schedra-header]",
     ) as HTMLElement;
     const corner = container.querySelector(
-      "[data-karst-corner-header]",
+      "[data-schedra-corner-header]",
     ) as HTMLElement;
     const time = container.querySelector(
-      "[data-karst-time-header]",
+      "[data-schedra-time-header]",
     ) as HTMLElement;
     expect(header.style.height).toBe("48px");
     expect(header.style.background).toBe("rgb(1, 2, 3)");
@@ -228,10 +228,10 @@ describe("item anchors", () => {
       height: 200,
       toJSON: () => ({}),
     });
-    let controller: KarstController<null, null> | null = null;
+    let controller: SchedraController<null, null> | null = null;
 
     function Harness() {
-      const karst = useKarst({
+      const schedra = useSchedra({
         rows: [
           {
             id: "row",
@@ -251,8 +251,8 @@ describe("item anchors", () => {
             visualRect: { ...layout.visualRect, x: 25, y: 8 },
           })),
       });
-      controller = karst;
-      return <KarstViewport karst={karst} />;
+      controller = schedra;
+      return <SchedraViewport schedra={schedra} />;
     }
 
     render(<Harness />);

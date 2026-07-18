@@ -1,53 +1,49 @@
 # Getting started
 
-This guide shows how to add Karst to a React project and render a controlled
+This guide shows how to add Schedra to a React project and render a controlled
 timeline.
 
 ## Status
 
-Karst is not published to npm yet. Until packages are published, build the
+Schedra is not published to npm yet. Until packages are published, build the
 repository and link the packages locally.
 
 ## Local installation
 
-Build and pack Karst:
+Build and pack Schedra:
 
 ```bash
-cd /path/to/karst
+cd /path/to/schedra
 pnpm install
 pnpm build
 mkdir -p ./artifacts
-pnpm --filter karst pack --pack-destination ./artifacts
+pnpm --filter schedra pack --pack-destination ./artifacts
 ```
 
-Install the generated tarballs in another project:
+Install the generated tarball in another project:
 
 ```bash
-pnpm add \
-  /path/to/karst/artifacts/karst-core-0.1.0.tgz \
-  /path/to/karst/artifacts/karst-react-0.1.0.tgz
+pnpm add /path/to/schedra/artifacts/schedra-0.1.0.tgz react react-dom
 ```
 
 For shared popovers, also install:
 
 ```bash
-pnpm add \
-  /path/to/karst/artifacts/karst-react-popover-0.1.0.tgz \
-  @floating-ui/react
+pnpm add @floating-ui/react
 ```
 
-After Karst is published, the expected command will be:
+After Schedra is published, the expected command will be:
 
 ```bash
-pnpm add karst react react-dom
+pnpm add schedra react react-dom
 ```
 
 ## Define rows and items
 
-Karst only requires IDs, timestamps, and consumer-owned data.
+Schedra only requires IDs, timestamps, and consumer-owned data.
 
 ```tsx
-import type { KarstRow } from "karst/core";
+import type { SchedraRow } from "schedra/core";
 
 type Resource = {
   name: string;
@@ -59,7 +55,7 @@ type Appointment = {
   status: "planned" | "active" | "complete";
 };
 
-const rows: KarstRow<Resource, Appointment>[] = [
+const rows: SchedraRow<Resource, Appointment>[] = [
   {
     id: "resource-1",
     data: {
@@ -92,8 +88,8 @@ Requirements:
 ## Add a controlled timeline
 
 ```tsx
-import type { SelectionChange } from "karst/core";
-import { KarstTimeline } from "karst/react";
+import type { SelectionChange } from "schedra/core";
+import { SchedraTimeline } from "schedra/react";
 import { useState } from "react";
 
 export function Schedule() {
@@ -103,7 +99,7 @@ export function Schedule() {
   });
 
   return (
-    <KarstTimeline
+    <SchedraTimeline
       rows={rows}
       range={{
         start: new Date("2026-07-17T00:00:00Z").getTime(),
@@ -131,9 +127,9 @@ collapse.
 ## Choose a view
 
 ```tsx
-<KarstTimeline view="hour" {...props} />
-<KarstTimeline view="day" {...props} />
-<KarstTimeline view="week" {...props} />
+<SchedraTimeline view="hour" {...props} />
+<SchedraTimeline view="day" {...props} />
+<SchedraTimeline view="week" {...props} />
 ```
 
 The view controls the time unit and base scale. It does not change item data.

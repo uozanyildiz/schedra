@@ -1,19 +1,19 @@
 {
-  "name": "@karst/core",
+  "name": "@schedra/core",
   "private": true,
   "version": "0.1.0",
   "description": "Framework-independent engine for large canvas-based Gantt timelines.",
   "type": "module",
   "license": "MIT",
   "author": "Uğur Ozan Yıldız",
-  "homepage": "https://github.com/uozanyildiz/karst#readme",
+  "homepage": "https://github.com/uozanyildiz/schedra#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/uozanyildiz/karst.git",
+    "url": "git+https://github.com/uozanyildiz/schedra.git",
     "directory": "packages/core"
   },
   "bugs": {
-    "url": "https://github.com/uozanyildiz/karst/issues"
+    "url": "https://github.com/uozanyildiz/schedra/issues"
   },
   "keywords": [
     "gantt",

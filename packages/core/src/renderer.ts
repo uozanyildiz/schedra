@@ -2,12 +2,12 @@ import type {
   CanvasLayerName,
   CanvasLayers,
   ItemRect,
-  KarstItem,
-  KarstTheme,
+  SchedraItem,
+  SchedraTheme,
   RenderItem,
 } from "./types.js";
 
-export const defaultTheme: KarstTheme = {
+export const defaultTheme: SchedraTheme = {
   background: "#ffffff",
   rowBackground: "#ffffff",
   alternateRowBackground: "#f8fafc",
@@ -94,7 +94,7 @@ export const defaultRenderItem: RenderItem = ({
   context.restore();
 };
 
-function labelFor(item: KarstItem): string {
+function labelFor(item: SchedraItem): string {
   const data = item.data;
   if (typeof data === "string") return data;
   if (data && typeof data === "object" && "label" in data)

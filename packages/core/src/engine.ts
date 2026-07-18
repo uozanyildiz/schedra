@@ -17,11 +17,11 @@ import type {
   HitRegion,
   ItemRect,
   ItemLayout,
-  KarstRow,
-  KarstSelection,
-  KarstTheme,
-  KarstView,
-  KarstViewport,
+  SchedraRow,
+  SchedraSelection,
+  SchedraTheme,
+  SchedraView,
+  SchedraViewport,
   RenderItem,
   RenderItems,
   ResolveItemLayouts,
@@ -30,9 +30,9 @@ import type {
 import { validateRows } from "./validation.js";
 import { getVisibleRowRange } from "./virtualization.js";
 
-export interface KarstEngineOptions<TRowData = unknown, TItemData = unknown> {
-  rows?: readonly KarstRow<TRowData, TItemData>[];
-  view?: KarstView;
+export interface SchedraEngineOptions<TRowData = unknown, TItemData = unknown> {
+  rows?: readonly SchedraRow<TRowData, TItemData>[];
+  view?: SchedraView;
   origin: number;
   zoom?: number;
   timeZone?: string;
@@ -40,9 +40,9 @@ export interface KarstEngineOptions<TRowData = unknown, TItemData = unknown> {
   rowHeight?: number;
   overscan?: number;
   conflictVisibility?: ConflictVisibility;
-  selection?: KarstSelection;
+  selection?: SchedraSelection;
   hoveredItemId?: string | null;
-  theme?: Partial<KarstTheme>;
+  theme?: Partial<SchedraTheme>;
   renderItem?: RenderItem<TItemData>;
   renderItems?: RenderItems<TRowData, TItemData>;
   resolveItemLayouts?: ResolveItemLayouts<TRowData, TItemData>;
@@ -55,25 +55,25 @@ export interface KarstEngineOptions<TRowData = unknown, TItemData = unknown> {
   cancelFrame?: (id: number) => void;
 }
 
-export class KarstEngine<TRowData = unknown, TItemData = unknown> {
+export class SchedraEngine<TRowData = unknown, TItemData = unknown> {
   private layers: CanvasLayers | null = null;
-  private rows: readonly KarstRow<TRowData, TItemData>[] = [];
+  private rows: readonly SchedraRow<TRowData, TItemData>[] = [];
   private itemIndex = new ItemIndex<TItemData>([]);
   private readonly hitIndex = new HitTestIndex<TItemData>();
   private conflicts: ConflictResult = emptyConflicts();
   private conflictKey = "";
   private dataIssues: DataIssue[] = [];
   private issueKey = "";
-  private viewport: KarstViewport = {
+  private viewport: SchedraViewport = {
     width: 0,
     height: 0,
     scrollLeft: 0,
     scrollTop: 0,
   };
-  private selection: KarstSelection;
+  private selection: SchedraSelection;
   private hoveredItemId: string | null;
   private selectionBox: ItemRect | null = null;
-  private view: KarstView;
+  private view: SchedraView;
   private zoom: number;
   private origin: number;
   private readonly timeZone: string;
@@ -87,7 +87,7 @@ export class KarstEngine<TRowData = unknown, TItemData = unknown> {
   private readonly rowHeight: number;
   private readonly overscan: number;
   private conflictVisibility: ConflictVisibility;
-  private readonly theme: KarstTheme;
+  private readonly theme: SchedraTheme;
   private readonly renderItem: RenderItem<TItemData>;
   private readonly renderItems: RenderItems<TRowData, TItemData> | undefined;
   private readonly resolveItemLayouts:
@@ -96,7 +96,7 @@ export class KarstEngine<TRowData = unknown, TItemData = unknown> {
   private lastVisibleRange = "";
 
   constructor(
-    private readonly options: KarstEngineOptions<TRowData, TItemData>,
+    private readonly options: SchedraEngineOptions<TRowData, TItemData>,
   ) {
     this.origin = options.origin;
     this.view = options.view ?? "hour";
@@ -136,7 +136,7 @@ export class KarstEngine<TRowData = unknown, TItemData = unknown> {
     this.detach();
   }
 
-  setRows(rows: readonly KarstRow<TRowData, TItemData>[]): void {
+  setRows(rows: readonly SchedraRow<TRowData, TItemData>[]): void {
     const validated = validateRows(rows);
     this.rows = validated.rows;
     this.itemIndex = new ItemIndex(validated.rows);
@@ -159,7 +159,7 @@ export class KarstEngine<TRowData = unknown, TItemData = unknown> {
     this.invalidate("items", "interaction");
   }
 
-  setViewport(viewport: KarstViewport): void {
+  setViewport(viewport: SchedraViewport): void {
     this.viewport = {
       width: Math.max(0, viewport.width),
       height: Math.max(0, viewport.height),
@@ -169,14 +169,14 @@ export class KarstEngine<TRowData = unknown, TItemData = unknown> {
     this.invalidate();
   }
 
-  setTimeScale(view: KarstView, zoom: number, origin = this.origin): void {
+  setTimeScale(view: SchedraView, zoom: number, origin = this.origin): void {
     this.view = view;
     this.zoom = zoom;
     this.origin = origin;
     this.invalidate();
   }
 
-  setSelection(selection: KarstSelection): void {
+  setSelection(selection: SchedraSelection): void {
     this.selection = selection;
     this.invalidate("interaction");
   }
@@ -379,7 +379,7 @@ export class KarstEngine<TRowData = unknown, TItemData = unknown> {
   }
 
   private createItemLayouts(
-    row: KarstRow<TRowData, TItemData>,
+    row: SchedraRow<TRowData, TItemData>,
     rowIndex: number,
     scale: ReturnType<typeof createTimeScale>,
     range: TimeRange,
@@ -545,10 +545,10 @@ function isValidRect(rect: ItemRect): boolean {
   );
 }
 
-export function createKarstEngine<TRowData = unknown, TItemData = unknown>(
-  options: KarstEngineOptions<TRowData, TItemData>,
-): KarstEngine<TRowData, TItemData> {
-  return new KarstEngine(options);
+export function createSchedraEngine<TRowData = unknown, TItemData = unknown>(
+  options: SchedraEngineOptions<TRowData, TItemData>,
+): SchedraEngine<TRowData, TItemData> {
+  return new SchedraEngine(options);
 }
 
 function emptyConflicts(): ConflictResult {
