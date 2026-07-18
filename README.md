@@ -6,7 +6,7 @@ It keeps React responsible for application state and UI while a small,
 framework-independent engine handles time calculations, virtualization, hit
 testing, conflicts, and layered canvas rendering.
 
-> Karst is in early development and is not published to npm yet.
+> Karst is in early development. The public API may change before version 1.0.
 
 ## Why Karst?
 
@@ -125,6 +125,11 @@ pnpm build
 pnpm lint
 pnpm format:check
 ```
+
+## Publishing
+
+See [RELEASING.md](RELEASING.md) for npm login, scope setup, verification, and
+the ordered release command.
 
 ## Current scope
 

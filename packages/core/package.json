@@ -1,8 +1,29 @@
 {
   "name": "@karst/core",
   "version": "0.1.0",
+  "description": "Framework-independent engine for large canvas-based Gantt timelines.",
   "type": "module",
   "license": "MIT",
+  "author": "Uğur Ozan Yıldız",
+  "homepage": "https://github.com/uozanyildiz/karst#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/uozanyildiz/karst.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/uozanyildiz/karst/issues"
+  },
+  "keywords": [
+    "gantt",
+    "timeline",
+    "canvas",
+    "virtualization",
+    "scheduler"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -17,6 +38,7 @@
   },
   "scripts": {
     "build": "rimraf dist && tsc -p tsconfig.build.json",
+    "prepack": "pnpm build",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

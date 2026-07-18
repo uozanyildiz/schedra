@@ -1,8 +1,29 @@
 {
   "name": "@karst/react",
   "version": "0.1.0",
+  "description": "Headless React components and hooks for large canvas-based Gantt timelines.",
   "type": "module",
   "license": "MIT",
+  "author": "Uğur Ozan Yıldız",
+  "homepage": "https://github.com/uozanyildiz/karst#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/uozanyildiz/karst.git",
+    "directory": "packages/react"
+  },
+  "bugs": {
+    "url": "https://github.com/uozanyildiz/karst/issues"
+  },
+  "keywords": [
+    "react",
+    "gantt",
+    "timeline",
+    "canvas",
+    "scheduler"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -17,6 +38,7 @@
   },
   "scripts": {
     "build": "rimraf dist && tsc -p tsconfig.build.json",
+    "prepack": "pnpm build",
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
