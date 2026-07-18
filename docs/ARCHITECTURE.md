@@ -21,19 +21,19 @@ Karst owns transient rendering state:
 
 ## Packages
 
-### `@karst/core`
+### `karst/core`
 
 No React or UI dependencies. It validates immutable row snapshots, indexes items,
 calculates conflicts and visibility, converts timestamps to pixels, virtualizes
 fixed-height rows, performs hit testing, and draws layered canvases.
 
-### `@karst/react`
+### `karst/react`
 
 Connects controlled React props to the core engine. It owns DOM refs,
 `ResizeObserver`, scroll events, canvas attachment, and virtualized row-label
 mounting. It exposes a hook-first API plus thin convenience components.
 
-### `@karst/react-popover`
+### `karst/react-popover`
 
 Optional Floating UI integration. The core engine supplies a virtual anchor
 rectangle for the active item. The consumer supplies all content and visual

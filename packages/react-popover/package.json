@@ -1,5 +1,6 @@
 {
   "name": "@karst/react-popover",
+  "private": true,
   "version": "0.1.0",
   "description": "Floating UI popover integration for @karst/react timelines.",
   "type": "module",

@@ -1,6 +1,6 @@
 # React guide
 
-`@karst/react` provides two integration styles:
+`karst/react` provides two integration styles:
 
 - `KarstTimeline` for a compact setup.
 - `useKarst` with `KarstViewport` for custom layouts and popovers.
@@ -31,7 +31,7 @@ Use `useKarst` when you need custom layout, programmatic scrolling, or a shared
 popover.
 
 ```tsx
-import { KarstViewport, useKarst } from "@karst/react";
+import { KarstViewport, useKarst } from "karst/react";
 
 function Schedule() {
   const karst = useKarst({

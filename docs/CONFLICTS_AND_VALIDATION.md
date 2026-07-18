@@ -120,10 +120,10 @@ const issues = karst.getDataIssues();
 
 ## Validate outside React
 
-`@karst/core` exports `validateRows`:
+`karst/core` exports `validateRows`:
 
 ```ts
-import { validateRows } from "@karst/core";
+import { validateRows } from "karst/core";
 
 const result = validateRows(rows);
 
@@ -136,7 +136,7 @@ This is useful before saving or importing schedule data.
 ## Detect conflicts outside React
 
 ```ts
-import { detectConflicts } from "@karst/core";
+import { detectConflicts } from "karst/core";
 
 const result = detectConflicts(rows, "hide-later");
 

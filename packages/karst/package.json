@@ -1,0 +1,82 @@
+{
+  "name": "karst",
+  "version": "0.1.0",
+  "description": "Headless canvas-based Gantt timeline for large React schedules.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Uğur Ozan Yıldız",
+  "homepage": "https://github.com/uozanyildiz/karst#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/uozanyildiz/karst.git",
+    "directory": "packages/karst"
+  },
+  "bugs": {
+    "url": "https://github.com/uozanyildiz/karst/issues"
+  },
+  "keywords": [
+    "react",
+    "gantt",
+    "timeline",
+    "canvas",
+    "virtualization",
+    "scheduler"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "exports": {
+    "./core": {
+      "types": "./dist/core/index.d.ts",
+      "import": "./dist/core/index.js"
+    },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "import": "./dist/react/index.js"
+    },
+    "./react-popover": {
+      "types": "./dist/react-popover/index.d.ts",
+      "import": "./dist/react-popover/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "pnpm build:dependencies && node scripts/build-package.mjs",
+    "build:dependencies": "pnpm --filter @karst/core build && pnpm --filter @karst/react build && pnpm --filter @karst/react-popover build",
+    "prepack": "pnpm build",
+    "test": "pnpm build && node --test tests/package.test.mjs",
+    "typecheck": "pnpm build && tsc -p tsconfig.json --noEmit"
+  },
+  "peerDependencies": {
+    "@floating-ui/react": "^0.27.0",
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@floating-ui/react": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@floating-ui/react": "^0.27.16",
+    "@karst/core": "workspace:*",
+    "@karst/react": "workspace:*",
+    "@karst/react-popover": "workspace:*",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "typescript": "^5.8.3"
+  }
+}

@@ -12,8 +12,8 @@
     "dev": "pnpm --filter @karst/demo dev",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "release:check": "pnpm typecheck && pnpm test && pnpm build && pnpm lint && pnpm format:check && pnpm --filter @karst/core publish --dry-run --access public --no-git-checks && pnpm --filter @karst/react publish --dry-run --access public --no-git-checks && pnpm --filter @karst/react-popover publish --dry-run --access public --no-git-checks",
-    "release:publish": "pnpm --filter @karst/core publish --access public && pnpm --filter @karst/react publish --access public && pnpm --filter @karst/react-popover publish --access public"
+    "release:check": "pnpm typecheck && pnpm test && pnpm build && pnpm lint && pnpm format:check && pnpm --filter karst publish --dry-run --access public --no-git-checks",
+    "release:publish": "pnpm --filter karst publish --access public"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

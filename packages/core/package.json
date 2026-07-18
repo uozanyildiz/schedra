@@ -1,5 +1,6 @@
 {
   "name": "@karst/core",
+  "private": true,
   "version": "0.1.0",
   "description": "Framework-independent engine for large canvas-based Gantt timelines.",
   "type": "module",

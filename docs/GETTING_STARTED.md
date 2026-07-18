@@ -17,9 +17,7 @@ cd /path/to/karst
 pnpm install
 pnpm build
 mkdir -p ./artifacts
-pnpm --filter @karst/core pack --pack-destination ./artifacts
-pnpm --filter @karst/react pack --pack-destination ./artifacts
-pnpm --filter @karst/react-popover pack --pack-destination ./artifacts
+pnpm --filter karst pack --pack-destination ./artifacts
 ```
 
 Install the generated tarballs in another project:
@@ -41,7 +39,7 @@ pnpm add \
 After Karst is published, the expected command will be:
 
 ```bash
-pnpm add @karst/core @karst/react
+pnpm add karst react react-dom
 ```
 
 ## Define rows and items
@@ -49,7 +47,7 @@ pnpm add @karst/core @karst/react
 Karst only requires IDs, timestamps, and consumer-owned data.
 
 ```tsx
-import type { KarstRow } from "@karst/core";
+import type { KarstRow } from "karst/core";
 
 type Resource = {
   name: string;
@@ -94,8 +92,8 @@ Requirements:
 ## Add a controlled timeline
 
 ```tsx
-import type { SelectionChange } from "@karst/core";
-import { KarstTimeline } from "@karst/react";
+import type { SelectionChange } from "karst/core";
+import { KarstTimeline } from "karst/react";
 import { useState } from "react";
 
 export function Schedule() {

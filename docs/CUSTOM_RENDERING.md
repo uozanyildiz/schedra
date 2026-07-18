@@ -31,7 +31,7 @@ You may pass a partial theme. Missing properties use Karst defaults.
 ## Draw custom items
 
 ```tsx
-import type { RenderItem } from "@karst/core";
+import type { RenderItem } from "karst/core";
 
 type ItemData = {
   title: string;

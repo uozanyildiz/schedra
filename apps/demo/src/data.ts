@@ -1,4 +1,4 @@
-import type { KarstItem, KarstRow } from "@karst/core";
+import type { KarstItem, KarstRow } from "karst/core";
 
 export const ROW_COUNT = 1_000;
 export const ROW_HEIGHT = 42;

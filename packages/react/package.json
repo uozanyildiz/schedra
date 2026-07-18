@@ -1,5 +1,6 @@
 {
   "name": "@karst/react",
+  "private": true,
   "version": "0.1.0",
   "description": "Headless React components and hooks for large canvas-based Gantt timelines.",
   "type": "module",

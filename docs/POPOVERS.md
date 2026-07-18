@@ -8,7 +8,7 @@ memory use stable even when the timeline contains 100,000 items.
 
 ## Install
 
-`@karst/react-popover` has a peer dependency on Floating UI:
+`karst/react-popover` has a peer dependency on Floating UI:
 
 ```bash
 pnpm add @floating-ui/react
@@ -22,9 +22,9 @@ Until Karst is published, follow the local linking steps in
 The popover hook needs a controller, so use the hook-first React API.
 
 ```tsx
-import type { SelectionChange } from "@karst/core";
-import { KarstViewport, useKarst } from "@karst/react";
-import { useKarstPopover } from "@karst/react-popover";
+import type { SelectionChange } from "karst/core";
+import { KarstViewport, useKarst } from "karst/react";
+import { useKarstPopover } from "karst/react-popover";
 import { useMemo, useState } from "react";
 
 function Schedule() {

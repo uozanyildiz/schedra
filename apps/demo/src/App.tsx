@@ -2,7 +2,7 @@ import type {
   ConflictVisibility,
   KarstView,
   SelectionChange,
-} from "@karst/core";
+} from "karst/core";
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
   colorAt,

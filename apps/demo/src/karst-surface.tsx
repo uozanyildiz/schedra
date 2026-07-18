@@ -1,6 +1,6 @@
-import type { KarstView, SelectionChange, TimeRange } from "@karst/core";
-import { KarstViewport, useKarst } from "@karst/react";
-import { useKarstPopover } from "@karst/react-popover";
+import type { KarstView, SelectionChange, TimeRange } from "karst/core";
+import { KarstViewport, useKarst } from "karst/react";
+import { useKarstPopover } from "karst/react-popover";
 import { useEffect, useMemo } from "react";
 import type { WorkItem, Workstream } from "./data";
 import { ROW_HEIGHT, SCHEDULE_START } from "./data";

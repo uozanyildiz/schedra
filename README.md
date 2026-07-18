@@ -21,18 +21,20 @@ testing, conflicts, and layered canvas rendering.
 
 ## Packages
 
-| Package                | Purpose                                                                                                  |
+Karst is published as one package with three entry points:
+
+| Import path            | Purpose                                                                                                  |
 | ---------------------- | -------------------------------------------------------------------------------------------------------- |
-| `@karst/core`          | Framework-independent engine, validation, conflicts, scales, virtualization, hit testing, and rendering. |
-| `@karst/react`         | Controlled React hook and timeline components.                                                           |
-| `@karst/react-popover` | Optional Floating UI integration for one shared popover.                                                 |
-| `@karst/demo`          | Reference application and performance playground.                                                        |
+| `karst/core`           | Framework-independent engine, validation, conflicts, scales, virtualization, hit testing, and rendering. |
+| `karst/react`          | Controlled React hook and timeline components.                                                           |
+| `karst/react-popover`  | Optional Floating UI integration for one shared popover.                                                 |
+| Internal `@karst/demo` | Reference application and performance playground.                                                        |
 
 ## Quick example
 
 ```tsx
-import type { KarstRow, SelectionChange } from "@karst/core";
-import { KarstTimeline } from "@karst/react";
+import type { KarstRow, SelectionChange } from "karst/core";
+import { KarstTimeline } from "karst/react";
 import { useState } from "react";
 
 type RowData = {

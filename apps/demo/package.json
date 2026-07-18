@@ -11,9 +11,7 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@karst/core": "workspace:*",
-    "@karst/react": "workspace:*",
-    "@karst/react-popover": "workspace:*",
+    "karst": "workspace:*",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
