@@ -208,7 +208,16 @@ export class SchedraEngine<TRowData = unknown, TItemData = unknown> {
   }
 
   hitTest(x: number, y: number): HitRegion<TItemData> | null {
-    return this.hitIndex.hitTest(x, y, this.rowHeight);
+    const context = this.layers?.interaction.getContext("2d");
+    return this.hitIndex.hitTest(
+      x,
+      y,
+      this.rowHeight,
+      context
+        ? (shape, pointX, pointY) =>
+            context.isPointInPath(shape, pointX, pointY)
+        : undefined,
+    );
   }
 
   getItemsInRect(
@@ -333,13 +342,14 @@ export class SchedraEngine<TRowData = unknown, TItemData = unknown> {
       const row = this.rows[rowIndex]!;
       const layouts = this.createItemLayouts(row, rowIndex, scale, range);
       const renderedItems = layouts.map(
-        ({ item, timeRect, visualRect, renderOrder }) => {
+        ({ item, timeRect, visualRect, visualShape, renderOrder }) => {
           const resolvedRenderOrder = renderOrder ?? 0;
           const milestone = item.start === item.end;
           return {
             item,
             timeRect,
             visualRect,
+            ...(visualShape === undefined ? {} : { visualShape }),
             renderOrder: resolvedRenderOrder,
             state: {
               selected: this.selection.selectedItemIds.includes(item.id),
@@ -368,10 +378,16 @@ export class SchedraEngine<TRowData = unknown, TItemData = unknown> {
           });
         }
       }
-      for (const { item, visualRect } of layouts) {
+      for (const { item, visualRect, visualShape } of layouts) {
         this.hitIndex.add(
           Math.floor(visualRect.y / this.rowHeight),
-          { item, rowId: row.id, visualRect, order: order++ },
+          {
+            item,
+            rowId: row.id,
+            visualRect,
+            ...(visualShape === undefined ? {} : { visualShape }),
+            order: order++,
+          },
           this.rowHeight,
         );
       }
@@ -427,10 +443,11 @@ export class SchedraEngine<TRowData = unknown, TItemData = unknown> {
     const resolvedById = new Map(
       resolved
         .filter(({ item, visualRect }) => isValidRect(visualRect) && item.id)
-        .map(({ item, visualRect, renderOrder }) => [
+        .map(({ item, visualRect, visualShape, renderOrder }) => [
           item.id,
           {
             visualRect: { ...visualRect },
+            ...(visualShape === undefined ? {} : { visualShape }),
             renderOrder: Number.isFinite(renderOrder) ? renderOrder : 0,
           },
         ]),
@@ -443,6 +460,9 @@ export class SchedraEngine<TRowData = unknown, TItemData = unknown> {
           item: layout.item,
           timeRect: baseline.timeRect,
           visualRect: resolvedLayout?.visualRect ?? baseline.visualRect,
+          ...(resolvedLayout?.visualShape === undefined
+            ? {}
+            : { visualShape: resolvedLayout.visualShape }),
           renderOrder: resolvedLayout?.renderOrder ?? 0,
           sourceIndex,
         };
@@ -489,11 +509,17 @@ export class SchedraEngine<TRowData = unknown, TItemData = unknown> {
     color: string,
     width: number,
   ): void {
-    const rect = this.hitIndex.getByItemId(itemId)?.visualRect;
-    if (!rect) return;
+    const region = this.hitIndex.getByItemId(itemId);
+    if (!region) return;
+    const { visualRect: rect, visualShape } = region;
     context.save();
     context.strokeStyle = color;
     context.lineWidth = width;
+    if (visualShape) {
+      context.stroke(visualShape);
+      context.restore();
+      return;
+    }
     context.beginPath();
     context.roundRect(
       rect.x - 1,

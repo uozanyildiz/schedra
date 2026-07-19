@@ -63,11 +63,23 @@ export class HitTestIndex<TData = unknown> {
     }
     this.byItem.set(region.item.id, region);
   }
-  hitTest(x: number, y: number, rowHeight: number): HitRegion<TData> | null {
+  hitTest(
+    x: number,
+    y: number,
+    rowHeight: number,
+    containsShape?: (shape: Path2D, x: number, y: number) => boolean,
+  ): HitRegion<TData> | null {
     const regions = this.byRow.get(Math.floor(y / rowHeight)) ?? [];
     for (let index = regions.length - 1; index >= 0; index--) {
       const region = regions[index]!;
-      if (contains(region.visualRect, x, y)) return region;
+      if (
+        contains(region.visualRect, x, y) &&
+        (!region.visualShape ||
+          !containsShape ||
+          containsShape(region.visualShape, x, y))
+      ) {
+        return region;
+      }
     }
     return null;
   }

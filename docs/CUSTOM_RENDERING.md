@@ -119,6 +119,35 @@ pointer hits when visual rectangles overlap. Equal values keep the original
 item order. `layoutOverflow` includes nearby time-based items that may be moved
 into the viewport by the layout resolver.
 
+### Non-rectangular interaction shapes
+
+Add an optional `visualShape` when an item is not rectangular. Karst reuses the
+same `Path2D` for precise pointer hits and hover or selection borders.
+
+```tsx
+resolveItemLayouts={({ layouts }) =>
+  layouts.map((layout) => {
+    if (layout.item.data.kind !== "arrow") return layout;
+
+    const { x, y, width, height } = layout.visualRect;
+    const path = new Path2D();
+    path.moveTo(x + 16, y);
+    path.lineTo(x + width, y);
+    path.lineTo(x + width, y + height);
+    path.lineTo(x + 16, y + height);
+    path.lineTo(x, y + height / 2);
+    path.closePath();
+
+    return { ...layout, visualShape: path };
+  })
+}
+```
+
+Custom renderers receive `visualShape` and may fill it with
+`context.fill(visualShape)`. If no shape is supplied, Karst keeps the existing
+rectangle behavior. Box selection and popover placement continue to use
+`visualRect`.
+
 ## Render state
 
 The renderer receives:

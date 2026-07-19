@@ -1,6 +1,6 @@
 {
   "name": "schedra",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Headless canvas-based Gantt timeline for large React schedules.",
   "type": "module",
   "license": "MIT",

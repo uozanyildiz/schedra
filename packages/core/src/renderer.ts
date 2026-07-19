@@ -57,12 +57,15 @@ export const defaultRenderItem: RenderItem = ({
   context,
   item,
   visualRect,
+  visualShape,
   state,
   theme,
 }) => {
   context.save();
   context.fillStyle = state.conflicted ? theme.conflictColor : theme.itemFill;
-  if (state.milestone) {
+  if (visualShape) {
+    context.fill(visualShape);
+  } else if (state.milestone) {
     const size = Math.min(visualRect.height, 12);
     context.translate(visualRect.x, visualRect.y + visualRect.height / 2);
     context.rotate(Math.PI / 4);
@@ -71,16 +74,21 @@ export const defaultRenderItem: RenderItem = ({
   } else {
     roundedRect(context, visualRect, theme.itemRadius);
     context.fill();
+  }
+  if (!state.milestone || visualShape) {
     const label = labelFor(item);
     if (label && visualRect.width > 18) {
-      context.beginPath();
-      context.rect(
-        visualRect.x + 4,
-        visualRect.y,
-        Math.max(0, visualRect.width - 8),
-        visualRect.height,
-      );
-      context.clip();
+      if (visualShape) context.clip(visualShape);
+      else {
+        context.beginPath();
+        context.rect(
+          visualRect.x + 4,
+          visualRect.y,
+          Math.max(0, visualRect.width - 8),
+          visualRect.height,
+        );
+        context.clip();
+      }
       context.fillStyle = theme.itemText;
       context.font = theme.font;
       context.textBaseline = "middle";

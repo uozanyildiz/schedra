@@ -25,9 +25,11 @@ const row = (
   items: items.map((item) => ({ ...item, data: null })),
 });
 
-function canvasLayers(): CanvasLayers {
+function canvasLayers(
+  overrides: Partial<CanvasRenderingContext2D> = {},
+): CanvasLayers {
   const context = new Proxy(
-    {},
+    { ...overrides },
     {
       get(target, property) {
         if (!(property in target)) {
@@ -230,6 +232,33 @@ describe("indexes", () => {
     expect(hits.hitTest(89, 10, 20)?.item.id).toBe("trip");
     expect(hits.getByItemId("terminal")?.visualRect.width).toBe(12);
   });
+
+  it("uses an optional visual shape after the rectangle hit check", () => {
+    const hits = new HitTestIndex();
+    const shape = {} as Path2D;
+    hits.add(0, {
+      item: { id: "background", start: 0, end: 1, data: null },
+      rowId: "a",
+      visualRect: { x: 0, y: 0, width: 20, height: 20 },
+      order: 0,
+    });
+    hits.add(0, {
+      item: { id: "arrow", start: 0, end: 1, data: null },
+      rowId: "a",
+      visualRect: { x: 0, y: 0, width: 20, height: 20 },
+      visualShape: shape,
+      order: 1,
+    });
+
+    expect(
+      hits.hitTest(5, 10, 20, (candidate) => candidate === shape && false)?.item
+        .id,
+    ).toBe("background");
+    expect(
+      hits.hitTest(15, 10, 20, (candidate, x) => candidate === shape && x > 10)
+        ?.item.id,
+    ).toBe("arrow");
+  });
 });
 
 describe("engine", () => {
@@ -323,6 +352,43 @@ describe("engine", () => {
 
     expect(rendered).toHaveBeenCalledOnce();
     expect(rendered.mock.calls[0]![0].visualRect.x).toBe(4);
+  });
+
+  it("reuses a visual shape for precise hits and the selection outline", () => {
+    const shape = {} as Path2D;
+    const stroke = vi.fn();
+    const isPointInPath = vi.fn(
+      (candidate: Path2D, x: number) => candidate === shape && x >= 10,
+    );
+    const engine = createSchedraEngine({
+      origin: 0,
+      rows: [row("a", [{ id: "arrow", start: 0, end: 3_600_000 }])],
+      selection: { selectedItemIds: ["arrow"], activeItemId: "arrow" },
+      resolveItemLayouts: ({ layouts }) =>
+        layouts.map((layout) => ({
+          ...layout,
+          visualShape: shape,
+        })),
+      requestFrame: () => 1,
+    });
+    engine.attach(
+      canvasLayers({
+        stroke,
+        isPointInPath:
+          isPointInPath as unknown as CanvasRenderingContext2D["isPointInPath"],
+      }),
+    );
+    engine.setViewport({
+      width: 200,
+      height: 36,
+      scrollLeft: 0,
+      scrollTop: 0,
+    });
+    engine.draw();
+
+    expect(stroke).toHaveBeenCalledWith(shape);
+    expect(engine.hitTest(5, 18)).toBeNull();
+    expect(engine.hitTest(15, 18)?.item.id).toBe("arrow");
   });
 
   it("can render a row as one batch while preserving item hit regions", () => {

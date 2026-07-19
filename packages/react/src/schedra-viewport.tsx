@@ -134,6 +134,7 @@ export function SchedraViewport<TRowData = unknown, TItemData = unknown>({
   const updateAnchorRef = useRef<() => void>(() => {});
   const frameRef = useRef<number | null>(null);
   const horizontalCanvasBufferBeforeRef = useRef(0);
+  const verticalCanvasScrollTopRef = useRef(0);
   const hoveredRef = useRef<string | null>(null);
   const boxDragRef = useRef<{
     pointerId: number;
@@ -322,7 +323,7 @@ export function SchedraViewport<TRowData = unknown, TItemData = unknown>({
     if (!scroller) return;
     const canvasTransform = `translate(${
       scroller.scrollLeft - horizontalCanvasBufferBeforeRef.current
-    }px, ${scroller.scrollTop}px)`;
+    }px, ${verticalCanvasScrollTopRef.current}px)`;
     for (const layer of [
       gridRef.current,
       itemsRef.current,
@@ -365,6 +366,7 @@ export function SchedraViewport<TRowData = unknown, TItemData = unknown>({
       overscanRows: verticalCanvasOverscan,
     });
     horizontalCanvasBufferBeforeRef.current = nextHorizontalBuffer.before;
+    verticalCanvasScrollTopRef.current = timelineScrollTop;
     if (gridOverlayRef.current) {
       gridOverlayRef.current.style.width = `${nextHorizontalBuffer.width}px`;
       gridOverlayRef.current.style.setProperty(

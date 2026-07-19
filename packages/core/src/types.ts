@@ -105,6 +105,7 @@ export interface HitRegion<TData = unknown> {
   item: SchedraItem<TData>;
   rowId: string;
   visualRect: ItemRect;
+  visualShape?: Path2D;
   order: number;
 }
 
@@ -147,6 +148,7 @@ export interface RenderItemArgs<TItemData = unknown> {
   item: SchedraItem<TItemData>;
   timeRect: Readonly<ItemRect>;
   visualRect: ItemRect;
+  visualShape?: Path2D;
   renderOrder: number;
   state: RenderItemState;
   theme: SchedraTheme;
@@ -171,6 +173,7 @@ export interface ItemLayout<TItemData = unknown> {
   item: SchedraItem<TItemData>;
   timeRect: Readonly<ItemRect>;
   visualRect: ItemRect;
+  visualShape?: Path2D;
   renderOrder?: number;
 }
 
