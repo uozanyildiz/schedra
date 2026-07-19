@@ -82,11 +82,37 @@ export function calculateVerticalCanvasBuffer({
   };
 }
 
+export function calculateHorizontalCanvasBuffer({
+  scrollLeft,
+  viewportWidth,
+  contentWidth,
+  overscanPixels,
+}: {
+  scrollLeft: number;
+  viewportWidth: number;
+  contentWidth: number;
+  overscanPixels: number;
+}) {
+  const overscan = Math.max(0, overscanPixels);
+  const width = Math.max(1, viewportWidth);
+  const before = Math.min(Math.max(0, scrollLeft), overscan);
+  const remaining = Math.max(0, contentWidth - Math.max(0, scrollLeft) - width);
+  const after = Math.min(remaining, overscan);
+
+  return {
+    before,
+    after,
+    scrollLeft: Math.max(0, scrollLeft - before),
+    width: width + before + after,
+  };
+}
+
 export function SchedraViewport<TRowData = unknown, TItemData = unknown>({
   schedra,
   className,
   style,
   labelWidth = 180,
+  horizontalCanvasOverscan = 200,
   verticalCanvasOverscan = 3,
   headerHeight = 32,
   headerStyle,
@@ -107,6 +133,7 @@ export function SchedraViewport<TRowData = unknown, TItemData = unknown>({
   const engineRef = useRef<SchedraEngine<TRowData, TItemData> | null>(null);
   const updateAnchorRef = useRef<() => void>(() => {});
   const frameRef = useRef<number | null>(null);
+  const horizontalCanvasBufferBeforeRef = useRef(0);
   const hoveredRef = useRef<string | null>(null);
   const boxDragRef = useRef<{
     pointerId: number;
@@ -293,14 +320,16 @@ export function SchedraViewport<TRowData = unknown, TItemData = unknown>({
   const pinViewportLayers = useCallback(() => {
     const scroller = scrollRef.current;
     if (!scroller) return;
-    const transform = `translate(${scroller.scrollLeft}px, ${scroller.scrollTop}px)`;
+    const canvasTransform = `translate(${
+      scroller.scrollLeft - horizontalCanvasBufferBeforeRef.current
+    }px, ${scroller.scrollTop}px)`;
     for (const layer of [
       gridRef.current,
       itemsRef.current,
       interactionRef.current,
       gridOverlayRef.current,
     ]) {
-      if (layer) layer.style.transform = transform;
+      if (layer) layer.style.transform = canvasTransform;
     }
   }, [scrollRef]);
 
@@ -317,6 +346,17 @@ export function SchedraViewport<TRowData = unknown, TItemData = unknown>({
     const timelineScrollLeft = scroller.scrollLeft;
     const timelineScrollTop = scroller.scrollTop;
     const rowHeight = options.rowHeight ?? 36;
+    const timelineWidth = Math.max(
+      1,
+      (options.range.end - options.range.start) *
+        pixelsPerMillisecond(options.view, options.zoom),
+    );
+    const nextHorizontalBuffer = calculateHorizontalCanvasBuffer({
+      scrollLeft: timelineScrollLeft,
+      viewportWidth: width,
+      contentWidth: timelineWidth,
+      overscanPixels: horizontalCanvasOverscan,
+    });
     const nextCanvasBuffer = calculateVerticalCanvasBuffer({
       scrollTop: timelineScrollTop,
       viewportHeight: height,
@@ -324,6 +364,14 @@ export function SchedraViewport<TRowData = unknown, TItemData = unknown>({
       rowHeight,
       overscanRows: verticalCanvasOverscan,
     });
+    horizontalCanvasBufferBeforeRef.current = nextHorizontalBuffer.before;
+    if (gridOverlayRef.current) {
+      gridOverlayRef.current.style.width = `${nextHorizontalBuffer.width}px`;
+      gridOverlayRef.current.style.setProperty(
+        "--schedra-horizontal-buffer-before",
+        `${nextHorizontalBuffer.before}px`,
+      );
+    }
     setViewport((current) =>
       current.width === width && current.height === height
         ? current
@@ -337,9 +385,9 @@ export function SchedraViewport<TRowData = unknown, TItemData = unknown>({
     }
     pinViewportLayers();
     engine.setViewport({
-      width,
+      width: nextHorizontalBuffer.width,
       height: nextCanvasBuffer.height,
-      scrollLeft: timelineScrollLeft,
+      scrollLeft: nextHorizontalBuffer.scrollLeft,
       scrollTop: nextCanvasBuffer.scrollTop,
     });
     const range = getVisibleRowRange(
@@ -378,6 +426,7 @@ export function SchedraViewport<TRowData = unknown, TItemData = unknown>({
     updateAnchor();
   }, [
     engine,
+    horizontalCanvasOverscan,
     schedra,
     labelWidth,
     pinViewportLayers,
@@ -780,7 +829,9 @@ export function SchedraViewport<TRowData = unknown, TItemData = unknown>({
               style={{
                 position: "absolute",
                 insetBlock: 0,
-                left: tickLeft(tick.timestamp),
+                left: `calc(${tickLeft(
+                  tick.timestamp,
+                )}px + var(--schedra-horizontal-buffer-before, 0px))`,
                 width: 1,
                 background: tick.major
                   ? "rgba(100,116,139,.36)"

@@ -79,6 +79,7 @@ export interface SchedraViewportProps<TRowData = unknown, TItemData = unknown> {
   className?: string;
   style?: CSSProperties;
   labelWidth?: number;
+  horizontalCanvasOverscan?: number;
   verticalCanvasOverscan?: number;
   headerHeight?: number;
   headerStyle?: CSSProperties;
@@ -106,6 +107,7 @@ export interface SchedraTimelineProps<
   className?: string;
   style?: CSSProperties;
   labelWidth?: number;
+  horizontalCanvasOverscan?: number;
   verticalCanvasOverscan?: number;
   headerHeight?: number;
   headerStyle?: CSSProperties;

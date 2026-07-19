@@ -9,6 +9,7 @@ export function SchedraTimeline<TRowData = unknown, TItemData = unknown>(
     className,
     style,
     labelWidth,
+    horizontalCanvasOverscan,
     verticalCanvasOverscan,
     headerHeight,
     headerStyle,
@@ -30,6 +31,9 @@ export function SchedraTimeline<TRowData = unknown, TItemData = unknown>(
       {...(className === undefined ? {} : { className })}
       {...(style === undefined ? {} : { style })}
       {...(labelWidth === undefined ? {} : { labelWidth })}
+      {...(horizontalCanvasOverscan === undefined
+        ? {}
+        : { horizontalCanvasOverscan })}
       {...(verticalCanvasOverscan === undefined
         ? {}
         : { verticalCanvasOverscan })}

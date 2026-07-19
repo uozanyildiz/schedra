@@ -4,6 +4,7 @@ import type { SchedraController } from "./types.js";
 import { SchedraTimeline } from "./schedra-timeline.js";
 import {
   SchedraViewport,
+  calculateHorizontalCanvasBuffer,
   calculatePointerCenteredScroll,
   calculateVerticalCanvasBuffer,
 } from "./schedra-viewport.js";
@@ -87,6 +88,40 @@ describe("calculateVerticalCanvasBuffer", () => {
       after: 22,
       scrollTop: 0,
       height: 400,
+    });
+  });
+});
+
+describe("calculateHorizontalCanvasBuffer", () => {
+  it("adds bitmap space on both sides of a middle viewport", () => {
+    expect(
+      calculateHorizontalCanvasBuffer({
+        scrollLeft: 800,
+        viewportWidth: 500,
+        contentWidth: 3_000,
+        overscanPixels: 200,
+      }),
+    ).toEqual({
+      before: 200,
+      after: 200,
+      scrollLeft: 600,
+      width: 900,
+    });
+  });
+
+  it("clamps bitmap space at the timeline boundaries", () => {
+    expect(
+      calculateHorizontalCanvasBuffer({
+        scrollLeft: 50,
+        viewportWidth: 500,
+        contentWidth: 600,
+        overscanPixels: 200,
+      }),
+    ).toEqual({
+      before: 50,
+      after: 50,
+      scrollLeft: 0,
+      width: 600,
     });
   });
 });
