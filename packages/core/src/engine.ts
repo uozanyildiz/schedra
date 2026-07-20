@@ -214,8 +214,14 @@ export class SchedraEngine<TRowData = unknown, TItemData = unknown> {
       y,
       this.rowHeight,
       context
-        ? (shape, pointX, pointY) =>
-            context.isPointInPath(shape, pointX, pointY)
+        ? (shape, pointX, pointY) => {
+            const transform = context.getTransform();
+            const canvasX =
+              transform.a * pointX + transform.c * pointY + transform.e;
+            const canvasY =
+              transform.b * pointX + transform.d * pointY + transform.f;
+            return context.isPointInPath(shape, canvasX, canvasY);
+          }
         : undefined,
     );
   }

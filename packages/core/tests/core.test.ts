@@ -358,7 +358,7 @@ describe("engine", () => {
     const shape = {} as Path2D;
     const stroke = vi.fn();
     const isPointInPath = vi.fn(
-      (candidate: Path2D, x: number) => candidate === shape && x >= 10,
+      (candidate: Path2D, x: number) => candidate === shape && x >= 20,
     );
     const engine = createSchedraEngine({
       origin: 0,
@@ -373,6 +373,15 @@ describe("engine", () => {
     });
     engine.attach(
       canvasLayers({
+        getTransform: () =>
+          ({
+            a: 2,
+            b: 0,
+            c: 0,
+            d: 2,
+            e: 0,
+            f: 0,
+          }) as DOMMatrix,
         stroke,
         isPointInPath:
           isPointInPath as unknown as CanvasRenderingContext2D["isPointInPath"],
