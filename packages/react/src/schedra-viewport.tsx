@@ -711,6 +711,7 @@ export function SchedraViewport<TRowData = unknown, TItemData = unknown>({
     view: schedra.options.view,
     timeZone: schedra.options.timeZone ?? "UTC",
     weekStartsOn: schedra.options.weekStartsOn ?? 1,
+    pixelsPerMillisecond: timeScale.pixelsPerMillisecond,
   });
   const tickLeft = (timestamp: number) =>
     timeScale.timestampToX(timestamp) -

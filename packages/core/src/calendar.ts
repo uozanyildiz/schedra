@@ -21,7 +21,16 @@ export interface CalculateTicksOptions {
   timeZone: string;
   /** Sunday is 0, Monday is 1. Defaults to Monday. */
   weekStartsOn?: number;
+  /**
+   * Current scale, used to subdivide hour ticks once whole hours are wide
+   * enough to hold finer labels. Omitting it keeps whole-hour ticks.
+   */
+  pixelsPerMillisecond?: number;
 }
+
+const MINUTE_MS = 60_000;
+const HOUR_TICK_STEPS_MS = [HOUR_MS, 30 * MINUTE_MS, 15 * MINUTE_MS];
+const MIN_TICK_SPACING_PX = 56;
 
 const formatterCache = new Map<string, Intl.DateTimeFormat>();
 
@@ -97,11 +106,26 @@ export function startOfZonedWeek(
 }
 
 /**
+ * Picks the finest hour-view step whose ticks stay at least
+ * `MIN_TICK_SPACING_PX` apart, so zooming in reveals half and quarter hours.
+ */
+function getHourTickStep(pixelsPerMillisecond?: number): number {
+  if (!pixelsPerMillisecond) return HOUR_MS;
+  let step = HOUR_MS;
+  for (const candidate of HOUR_TICK_STEPS_MS) {
+    if (candidate * pixelsPerMillisecond < MIN_TICK_SPACING_PX) break;
+    step = candidate;
+  }
+  return step;
+}
+
+/**
  * Produces ticks intersecting a visible timestamp range.
  *
  * Day and week ticks advance by local calendar dates, never fixed 24-hour
  * durations. Hour ticks advance on the real-time axis and mark local midnight
  * as major, correctly showing a missing/repeated hour on DST transition days.
+ * Subdivided hour ticks mark every whole hour as major instead.
  */
 export function calculateTimelineTicks(
   options: CalculateTicksOptions,
@@ -111,19 +135,23 @@ export function calculateTimelineTicks(
   const ticks: TimelineTick[] = [];
 
   if (view === "hour") {
+    const step = getHourTickStep(options.pixelsPerMillisecond);
     let dayStart = startOfZonedDay(range.start, timeZone);
     while (addZonedDays(dayStart, 1, timeZone) <= range.start) {
       dayStart = addZonedDays(dayStart, 1, timeZone);
     }
     let tick = dayStart;
-    while (tick < range.start) tick += HOUR_MS;
+    while (tick < range.start) tick += step;
     while (tick < range.end) {
       const parts = getZonedDateParts(tick, timeZone);
       ticks.push({
         timestamp: tick,
-        major: parts.hour === 0 && parts.minute === 0,
+        major:
+          step === HOUR_MS
+            ? parts.hour === 0 && parts.minute === 0
+            : parts.minute === 0,
       });
-      tick += HOUR_MS;
+      tick += step;
     }
     return ticks;
   }

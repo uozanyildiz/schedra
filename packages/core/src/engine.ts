@@ -325,6 +325,7 @@ export class SchedraEngine<TRowData = unknown, TItemData = unknown> {
       view: this.view,
       timeZone: this.timeZone,
       weekStartsOn: this.weekStartsOn,
+      pixelsPerMillisecond: scale.pixelsPerMillisecond,
     });
     for (const tick of ticks) {
       const x = scale.timestampToX(tick.timestamp) - this.viewport.scrollLeft;

@@ -305,6 +305,10 @@ including 23-hour and 25-hour daylight-saving days.
 `weekStartsOn` accepts `0` through `6`. Use `1` for Monday, which is the
 default.
 
+In the hour view, ticks subdivide as you zoom in: whole hours become half
+hours and then quarter hours once each step is wide enough to hold a label.
+Whole hours stay `major` while subdivided, so grid lines keep a hierarchy.
+
 ## Main options
 
 | Option                 | Type                        | Required | Purpose                                   |

@@ -141,3 +141,58 @@ describe("timezone-aware ticks", () => {
     expect(hours.filter((hour) => hour === 1)).toHaveLength(2);
   });
 });
+
+describe("hour tick subdivision", () => {
+  const start = Date.parse("2026-07-17T00:00:00Z");
+  const minutesOf = (pixelsPerMillisecond?: number) =>
+    calculateTimelineTicks({
+      range: { start, end: start + 2 * HOUR_MS },
+      view: "hour",
+      timeZone: "UTC",
+      ...(pixelsPerMillisecond === undefined ? {} : { pixelsPerMillisecond }),
+    }).map((tick) => getZonedDateParts(tick.timestamp, "UTC").minute);
+
+  it("keeps whole hours when the scale is omitted", () => {
+    expect(minutesOf()).toEqual([0, 0]);
+  });
+
+  it("keeps whole hours while an hour is narrower than two labels", () => {
+    // 111px per hour leaves a half hour under the 56px minimum.
+    expect(minutesOf(111 / HOUR_MS)).toEqual([0, 0]);
+  });
+
+  it("halves the step once a half hour clears the minimum spacing", () => {
+    expect(minutesOf(112 / HOUR_MS)).toEqual([0, 30, 0, 30]);
+  });
+
+  it("quarters the step once a quarter hour clears the minimum spacing", () => {
+    expect(minutesOf(224 / HOUR_MS)).toEqual([0, 15, 30, 45, 0, 15, 30, 45]);
+  });
+
+  it("marks whole hours as major once subdivided", () => {
+    const ticks = calculateTimelineTicks({
+      range: { start, end: start + HOUR_MS },
+      view: "hour",
+      timeZone: "UTC",
+      pixelsPerMillisecond: 224 / HOUR_MS,
+    });
+    expect(ticks.map((tick) => tick.major)).toEqual([
+      true,
+      false,
+      false,
+      false,
+    ]);
+  });
+
+  it("subdivides from local midnight in offset timezones", () => {
+    const istanbulNoon = Date.parse("2026-07-17T09:00:00Z");
+    const minutes = calculateTimelineTicks({
+      range: { start: istanbulNoon, end: istanbulNoon + HOUR_MS },
+      view: "hour",
+      timeZone: "Europe/Istanbul",
+      pixelsPerMillisecond: 224 / HOUR_MS,
+    }).map((tick) => getZonedDateParts(tick.timestamp, "Europe/Istanbul"));
+    expect(minutes.map((parts) => parts.minute)).toEqual([0, 15, 30, 45]);
+    expect(minutes.every((parts) => parts.hour === 12)).toBe(true);
+  });
+});
