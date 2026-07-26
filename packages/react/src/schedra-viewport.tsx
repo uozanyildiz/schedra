@@ -3,6 +3,9 @@ import {
   createSchedraEngine,
   createTimeScale,
   getVisibleRowRange,
+  DAY_MS,
+  HOUR_MS,
+  WEEK_MS,
   type CanvasLayers,
   type SchedraEngine,
 } from "@schedra/core";
@@ -107,6 +110,39 @@ export function calculateHorizontalCanvasBuffer({
   };
 }
 
+/** Widest step a view can tick at. Subdivided hours only tick more often. */
+const maxTickIntervalByView = {
+  hour: HOUR_MS,
+  day: DAY_MS,
+  week: WEEK_MS,
+};
+
+/**
+ * Widens the visible range so ticks stay available while the header is shifted
+ * against a scroll that has not been synced yet. The padding covers at least
+ * one tick step, which also guarantees a leading tick outside the viewport.
+ */
+export function calculateTickRange({
+  visibleRange,
+  view,
+  zoom,
+  overscanPixels,
+}: {
+  visibleRange: { start: number; end: number };
+  view: "hour" | "day" | "week";
+  zoom: number;
+  overscanPixels: number;
+}) {
+  const overscanMs =
+    Math.max(0, overscanPixels) / pixelsPerMillisecond(view, zoom);
+  const padding = Math.max(overscanMs, maxTickIntervalByView[view]);
+
+  return {
+    start: visibleRange.start - padding,
+    end: visibleRange.end + padding,
+  };
+}
+
 export function SchedraViewport<TRowData = unknown, TItemData = unknown>({
   schedra,
   className,
@@ -130,6 +166,8 @@ export function SchedraViewport<TRowData = unknown, TItemData = unknown>({
   const itemsRef = useRef<HTMLCanvasElement>(null);
   const interactionRef = useRef<HTMLCanvasElement>(null);
   const gridOverlayRef = useRef<HTMLDivElement>(null);
+  const timeHeaderContentRef = useRef<HTMLDivElement>(null);
+  const timeHeaderScrollLeftRef = useRef(0);
   const engineRef = useRef<SchedraEngine<TRowData, TItemData> | null>(null);
   const updateAnchorRef = useRef<() => void>(() => {});
   const frameRef = useRef<number | null>(null);
@@ -334,6 +372,14 @@ export function SchedraViewport<TRowData = unknown, TItemData = unknown>({
     ]) {
       if (layer) layer.style.transform = canvasTransform;
     }
+    // The header is sticky, so it gets no scroll displacement to cancel out the
+    // scroll offset its ticks were laid out for. Shift it here instead, against
+    // the live scroll position, so it never trails the canvas layers.
+    if (timeHeaderContentRef.current) {
+      timeHeaderContentRef.current.style.transform = `translateX(${
+        timeHeaderScrollLeftRef.current - scroller.scrollLeft
+      }px)`;
+    }
   }, [scrollRef]);
 
   const syncViewport = useCallback(() => {
@@ -484,6 +530,13 @@ export function SchedraViewport<TRowData = unknown, TItemData = unknown>({
     scrollRef,
     syncViewport,
   ]);
+
+  useLayoutEffect(() => {
+    timeHeaderScrollLeftRef.current =
+      (visibleTime.start - currentOrigin) *
+      pixelsPerMillisecond(currentView, currentZoom);
+    pinViewportLayers();
+  }, [currentOrigin, currentView, currentZoom, pinViewportLayers, visibleTime]);
 
   useLayoutEffect(() => {
     const layers = {
@@ -706,24 +759,42 @@ export function SchedraViewport<TRowData = unknown, TItemData = unknown>({
     origin: schedra.options.range.start,
     zoom: schedra.options.zoom,
   });
-  const ticks = calculateTimelineTicks({
-    range: visibleTime,
+  const tickOptions = {
     view: schedra.options.view,
     timeZone: schedra.options.timeZone ?? "UTC",
     weekStartsOn: schedra.options.weekStartsOn ?? 1,
     pixelsPerMillisecond: timeScale.pixelsPerMillisecond,
+  };
+  const ticks = calculateTimelineTicks({ range: visibleTime, ...tickOptions });
+  const headerTicks = calculateTimelineTicks({
+    range: calculateTickRange({
+      visibleRange: visibleTime,
+      view: schedra.options.view,
+      zoom: schedra.options.zoom,
+      overscanPixels: horizontalCanvasOverscan,
+    }),
+    ...tickOptions,
   });
   const tickLeft = (timestamp: number) =>
     timeScale.timestampToX(timestamp) -
     timeScale.timestampToX(visibleTime.start);
-  const formatter = new Intl.DateTimeFormat(undefined, {
-    timeZone: schedra.options.timeZone ?? "UTC",
-    ...(schedra.options.view === "hour"
-      ? { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "short" }
-      : schedra.options.view === "day"
-        ? { day: "2-digit", month: "short" }
-        : { day: "2-digit", month: "short", year: "numeric" }),
-  });
+  const formatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(undefined, {
+        timeZone: tickOptions.timeZone,
+        ...(tickOptions.view === "hour"
+          ? {
+              hour: "2-digit",
+              minute: "2-digit",
+              day: "2-digit",
+              month: "short",
+            }
+          : tickOptions.view === "day"
+            ? { day: "2-digit", month: "short" }
+            : { day: "2-digit", month: "short", year: "numeric" }),
+      }),
+    [tickOptions.timeZone, tickOptions.view],
+  );
 
   return (
     <div
@@ -792,29 +863,35 @@ export function SchedraViewport<TRowData = unknown, TItemData = unknown>({
               ...timeHeaderStyle,
             }}
           >
-            {renderTimeHeader?.({
-              ticks,
-              visibleRange: visibleTime,
-              width: viewport.width,
-              height: resolvedHeaderHeight,
-              view: schedra.options.view,
-              timeZone: schedra.options.timeZone ?? "UTC",
-              formatTick: (timestamp) => formatter.format(timestamp),
-              getTickOffset: tickLeft,
-            }) ??
-              ticks.map((tick) => (
-                <span
-                  key={tick.timestamp}
-                  style={{
-                    position: "absolute",
-                    left: tickLeft(tick.timestamp),
-                    top: 8,
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {formatter.format(tick.timestamp)}
-                </span>
-              ))}
+            <div
+              ref={timeHeaderContentRef}
+              data-schedra-time-header-content=""
+              style={{ position: "absolute", inset: 0 }}
+            >
+              {renderTimeHeader?.({
+                ticks: headerTicks,
+                visibleRange: visibleTime,
+                width: viewport.width,
+                height: resolvedHeaderHeight,
+                view: schedra.options.view,
+                timeZone: schedra.options.timeZone ?? "UTC",
+                formatTick: (timestamp) => formatter.format(timestamp),
+                getTickOffset: tickLeft,
+              }) ??
+                headerTicks.map((tick) => (
+                  <span
+                    key={tick.timestamp}
+                    style={{
+                      position: "absolute",
+                      left: tickLeft(tick.timestamp),
+                      top: 8,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {formatter.format(tick.timestamp)}
+                  </span>
+                ))}
+            </div>
           </div>
         </div>
         <div

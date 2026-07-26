@@ -6,9 +6,12 @@ import {
   SchedraViewport,
   calculateHorizontalCanvasBuffer,
   calculatePointerCenteredScroll,
+  calculateTickRange,
   calculateVerticalCanvasBuffer,
 } from "./schedra-viewport.js";
 import { useSchedra } from "./use-schedra.js";
+
+const HOUR = 3_600_000;
 
 beforeEach(() => {
   vi.stubGlobal(
@@ -126,6 +129,33 @@ describe("calculateHorizontalCanvasBuffer", () => {
   });
 });
 
+describe("calculateTickRange", () => {
+  it("pads the visible range by the horizontal overscan", () => {
+    // 200px of overscan is 2.5h at the 80px hour width.
+    expect(
+      calculateTickRange({
+        visibleRange: { start: 10 * HOUR, end: 14 * HOUR },
+        view: "hour",
+        zoom: 1,
+        overscanPixels: 200,
+      }),
+    ).toEqual({ start: 7.5 * HOUR, end: 16.5 * HOUR });
+  });
+
+  it("keeps at least one tick interval of padding when zoomed in", () => {
+    // At 4x an hour is 320px wide, so the overscan alone would not guarantee
+    // a tick outside the viewport on either side.
+    expect(
+      calculateTickRange({
+        visibleRange: { start: 10 * HOUR, end: 14 * HOUR },
+        view: "hour",
+        zoom: 4,
+        overscanPixels: 200,
+      }),
+    ).toEqual({ start: 9 * HOUR, end: 15 * HOUR });
+  });
+});
+
 describe("sticky viewport layers", () => {
   const timelineProps = {
     rows: [
@@ -181,6 +211,28 @@ describe("sticky viewport layers", () => {
           .style.position,
       ).toBe("absolute"),
     );
+  });
+
+  it("shifts the time header with a scroll that has not been synced yet", () => {
+    const { container } = render(<SchedraTimeline {...timelineProps} />);
+
+    const scroller = container.firstElementChild as HTMLElement;
+    const content = container.querySelector(
+      "[data-schedra-time-header-content]",
+    ) as HTMLElement;
+    expect(content.style.transform).toBe("translateX(0px)");
+
+    // requestAnimationFrame is stubbed out, so no sync runs after the scroll.
+    // The header must already be in place by the time the browser paints.
+    Object.defineProperty(scroller, "scrollLeft", {
+      value: 300,
+      configurable: true,
+    });
+    act(() => {
+      scroller.dispatchEvent(new Event("scroll"));
+    });
+
+    expect(content.style.transform).toBe("translateX(-300px)");
   });
 
   it("forwards custom header layout, styles, and renderers", () => {
