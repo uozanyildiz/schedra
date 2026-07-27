@@ -487,8 +487,11 @@ export function SchedraViewport<TRowData = unknown, TItemData = unknown>({
 
   const scheduleSync = useCallback(() => {
     if (frameRef.current !== null) return;
-    frameRef.current = requestAnimationFrame(syncViewport);
-  }, [syncViewport]);
+    frameRef.current = requestAnimationFrame(() => {
+      syncViewport();
+      engine.flush();
+    });
+  }, [engine, syncViewport]);
 
   const currentZoom = schedra.options.zoom;
   const currentView = schedra.options.view;

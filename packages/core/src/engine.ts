@@ -246,6 +246,20 @@ export class SchedraEngine<TRowData = unknown, TItemData = unknown> {
     });
   }
 
+  /**
+   * Draws invalidated layers now instead of on the queued frame. Callers that
+   * already run inside an animation frame need this: a frame requested from
+   * within a frame lands on the next one, so the layers would paint one frame
+   * behind the transform that positions them.
+   */
+  flush(): void {
+    if (this.frameId !== null) {
+      this.cancelFrame(this.frameId);
+      this.frameId = null;
+    }
+    this.draw();
+  }
+
   draw(): void {
     if (!this.layers) return;
     const { width, height } = this.viewport;
