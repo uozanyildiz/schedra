@@ -98,14 +98,16 @@ export function calculateHorizontalCanvasBuffer({
 }) {
   const overscan = Math.max(0, overscanPixels);
   const width = Math.max(1, viewportWidth);
-  const before = Math.min(Math.max(0, scrollLeft), overscan);
-  const remaining = Math.max(0, contentWidth - Math.max(0, scrollLeft) - width);
+  const maxScrollLeft = Math.max(0, contentWidth - width);
+  const anchoredScrollLeft = Math.min(Math.max(0, scrollLeft), maxScrollLeft);
+  const before = Math.min(anchoredScrollLeft, overscan);
+  const remaining = Math.max(0, contentWidth - anchoredScrollLeft - width);
   const after = Math.min(remaining, overscan);
 
   return {
     before,
     after,
-    scrollLeft: Math.max(0, scrollLeft - before),
+    scrollLeft: anchoredScrollLeft - before,
     width: width + before + after,
   };
 }
@@ -171,9 +173,8 @@ export function SchedraViewport<TRowData = unknown, TItemData = unknown>({
   const engineRef = useRef<SchedraEngine<TRowData, TItemData> | null>(null);
   const updateAnchorRef = useRef<() => void>(() => {});
   const frameRef = useRef<number | null>(null);
-  const horizontalCanvasBufferBeforeRef = useRef(0);
-  const horizontalCanvasScrollLeftRef = useRef(0);
-  const verticalCanvasScrollTopRef = useRef(0);
+  const canvasTranslateXRef = useRef(0);
+  const canvasTranslateYRef = useRef(0);
   const hoveredRef = useRef<string | null>(null);
   const boxDragRef = useRef<{
     pointerId: number;
@@ -360,10 +361,7 @@ export function SchedraViewport<TRowData = unknown, TItemData = unknown>({
   const pinViewportLayers = useCallback(() => {
     const scroller = scrollRef.current;
     if (!scroller) return;
-    const canvasTransform = `translate(${
-      horizontalCanvasScrollLeftRef.current -
-      horizontalCanvasBufferBeforeRef.current
-    }px, ${verticalCanvasScrollTopRef.current}px)`;
+    const canvasTransform = `translate(${canvasTranslateXRef.current}px, ${canvasTranslateYRef.current}px)`;
     for (const layer of [
       gridRef.current,
       itemsRef.current,
@@ -413,9 +411,9 @@ export function SchedraViewport<TRowData = unknown, TItemData = unknown>({
       rowHeight,
       overscanRows: verticalCanvasOverscan,
     });
-    horizontalCanvasBufferBeforeRef.current = nextHorizontalBuffer.before;
-    horizontalCanvasScrollLeftRef.current = timelineScrollLeft;
-    verticalCanvasScrollTopRef.current = timelineScrollTop;
+    // X carries the leading buffer itself; Y gets it from the canvas `top` below.
+    canvasTranslateXRef.current = nextHorizontalBuffer.scrollLeft;
+    canvasTranslateYRef.current = timelineScrollTop;
     if (gridOverlayRef.current) {
       gridOverlayRef.current.style.width = `${nextHorizontalBuffer.width}px`;
       gridOverlayRef.current.style.setProperty(

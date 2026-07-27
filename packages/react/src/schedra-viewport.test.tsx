@@ -127,6 +127,22 @@ describe("calculateHorizontalCanvasBuffer", () => {
       width: 600,
     });
   });
+
+  it("keeps the bitmap inside the content when the scroll overshoots the end", () => {
+    expect(
+      calculateHorizontalCanvasBuffer({
+        scrollLeft: 2_600,
+        viewportWidth: 500,
+        contentWidth: 3_000,
+        overscanPixels: 200,
+      }),
+    ).toEqual({
+      before: 200,
+      after: 0,
+      scrollLeft: 2_300,
+      width: 700,
+    });
+  });
 });
 
 describe("calculateTickRange", () => {
