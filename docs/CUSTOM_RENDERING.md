@@ -15,6 +15,7 @@ const theme = {
   itemFill: "#2d6cdf",
   itemText: "#fffdf7",
   selectionColor: "#211f1a",
+  selectionWidth: 2,
   hoverColor: "#ff5c35",
   conflictColor: "#d9432f",
   milestoneFill: "#9b6bce",
@@ -27,6 +28,10 @@ const theme = {
 ```
 
 You may pass a partial theme. Missing properties use Schedra defaults.
+
+`selectionWidth` is the stroke width of the ring drawn around selected items, and
+`hoverColor` uses a fixed `1` width. The ring sits just outside the item, so it
+scales outward as the width grows. Odd widths stay pixel-crisp.
 
 ## Draw custom items
 

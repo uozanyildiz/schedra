@@ -400,6 +400,36 @@ describe("engine", () => {
     expect(engine.hitTest(15, 18)?.item.id).toBe("arrow");
   });
 
+  it("strokes the selection ring with the themed width just outside the item", () => {
+    const roundRect = vi.fn();
+    const layers = canvasLayers({ roundRect });
+    const engine = createSchedraEngine({
+      origin: 0,
+      rows: [row("a", [{ id: "trip", start: 0, end: 3_600_000 }])],
+      selection: { selectedItemIds: ["trip"], activeItemId: "trip" },
+      theme: { selectionWidth: 1, itemRadius: 4 },
+      requestFrame: () => 1,
+    });
+    engine.attach(layers);
+    engine.setViewport({
+      width: 200,
+      height: 36,
+      scrollLeft: 0,
+      scrollTop: 0,
+    });
+    engine.draw();
+
+    const context = layers.interaction.getContext("2d")!;
+    const anchor = engine.getItemAnchorRect("trip")!;
+    const [x, y, width, height, radius] = roundRect.mock.lastCall!;
+    expect(context.lineWidth).toBe(1);
+    expect(radius).toBe(4.5);
+    expect(x).toBe(anchor.x - 0.5);
+    expect(y).toBe(anchor.y - 0.5);
+    expect(x + width).toBe(anchor.x + anchor.width + 0.5);
+    expect(y + height).toBe(anchor.y + anchor.height + 0.5);
+  });
+
   it("can render a row as one batch while preserving item hit regions", () => {
     const renderItems = vi.fn();
     const engine = createSchedraEngine({

@@ -16,6 +16,7 @@ export const defaultTheme: SchedraTheme = {
   itemFill: "#2563eb",
   itemText: "#ffffff",
   selectionColor: "#0f172a",
+  selectionWidth: 2,
   hoverColor: "#38bdf8",
   conflictColor: "#dc2626",
   milestoneFill: "#7c3aed",

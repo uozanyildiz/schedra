@@ -497,7 +497,12 @@ export class SchedraEngine<TRowData = unknown, TItemData = unknown> {
 
   private drawInteraction(context: CanvasRenderingContext2D): void {
     for (const id of this.selection.selectedItemIds)
-      this.strokeRegion(context, id, this.theme.selectionColor, 2);
+      this.strokeRegion(
+        context,
+        id,
+        this.theme.selectionColor,
+        this.theme.selectionWidth,
+      );
     if (this.hoveredItemId)
       this.strokeRegion(context, this.hoveredItemId, this.theme.hoverColor, 1);
     if (this.selectionBox) {
@@ -541,13 +546,14 @@ export class SchedraEngine<TRowData = unknown, TItemData = unknown> {
       context.restore();
       return;
     }
+    const offset = width / 2;
     context.beginPath();
     context.roundRect(
-      rect.x - 1,
-      rect.y - 1,
-      rect.width + 2,
-      rect.height + 2,
-      Math.min(this.theme.itemRadius + 1, (rect.height + 2) / 2),
+      rect.x - offset,
+      rect.y - offset,
+      rect.width + width,
+      rect.height + width,
+      Math.min(this.theme.itemRadius + offset, (rect.height + width) / 2),
     );
     context.stroke();
     context.restore();

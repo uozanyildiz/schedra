@@ -135,6 +135,7 @@ export interface SchedraTheme {
   itemFill: string;
   itemText: string;
   selectionColor: string;
+  selectionWidth: number;
   hoverColor: string;
   conflictColor: string;
   milestoneFill: string;
