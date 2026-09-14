@@ -196,3 +196,39 @@ describe("hour tick subdivision", () => {
     expect(minutes.every((parts) => parts.hour === 12)).toBe(true);
   });
 });
+
+describe("fake-timer environments", () => {
+  it("reads the Unix epoch even when the environment treats 0 as now", () => {
+    const originalFormatToParts = Intl.DateTimeFormat.prototype.formatToParts;
+
+    // Playwright's clock replaces a numeric 0 with the faked current time.
+    Intl.DateTimeFormat.prototype.formatToParts = function (
+      this: Intl.DateTimeFormat,
+      date?: Date | number,
+    ) {
+      if (date === 0) {
+        return originalFormatToParts.call(
+          this,
+          new Date("2030-01-01T00:00:00Z"),
+        );
+      }
+      return originalFormatToParts.call(this, date);
+    };
+
+    try {
+      const ticks = calculateTimelineTicks({
+        range: { start: 0, end: 2 * HOUR_MS },
+        view: "day",
+        timeZone: "UTC",
+      });
+      expect(ticks[0]?.timestamp).toBe(0);
+      expect(getZonedDateParts(0, "UTC")).toMatchObject({
+        year: 1970,
+        month: 1,
+        day: 1,
+      });
+    } finally {
+      Intl.DateTimeFormat.prototype.formatToParts = originalFormatToParts;
+    }
+  });
+});

@@ -48,7 +48,10 @@ export function getZonedDateParts(
   const formatter = getFormatter(timeZone);
   const values = Object.fromEntries(
     formatter
-      .formatToParts(timestamp)
+      // Pass a Date instead of a numeric timestamp: fake-timer environments
+      // (for example Playwright's clock) treat the number 0 as a missing
+      // argument and format the current time instead of the Unix epoch.
+      .formatToParts(new Date(timestamp))
       .filter((part) => part.type !== "literal")
       .map((part) => [part.type, Number(part.value)]),
   );
@@ -220,7 +223,7 @@ function getFormatter(timeZone: string): Intl.DateTimeFormat {
     second: "2-digit",
   });
   // Force eager time-zone validation.
-  formatter.format(0);
+  formatter.format(new Date(0));
   formatterCache.set(timeZone, formatter);
   return formatter;
 }
